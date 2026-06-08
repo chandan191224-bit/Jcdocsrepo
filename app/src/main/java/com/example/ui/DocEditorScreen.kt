@@ -1677,12 +1677,23 @@ fun WorkspacePane(
                                 )
                             }
 
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            if (activeRibbonTab == "AI Assistant") {
+                                AIChatPanel(
+                                    draftContent = draftContent,
+                                    onContentChange = onContentChange,
+                                    onClose = { isRibbonExpanded = false },
+                                    viewModel = viewModel,
+                                    selectedDoc = selectedDoc,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                 Row(
                                     modifier = Modifier
                                         .weight(1f)
@@ -2850,9 +2861,11 @@ fun WorkspacePane(
                                         }
                                     }
                                 }
-                            }
-                        }
-                    }
+                            } // End of Box
+                                } // End of nested Column
+                            } // End of else
+                        } // End of AnimatedVisibility Column
+                    } // End of AnimatedVisibility
 
                     Row(
                         modifier = Modifier
