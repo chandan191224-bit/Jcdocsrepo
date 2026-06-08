@@ -479,7 +479,9 @@ data class RibbonTool(
     val tab: String,
     val actionId: String,
     val hasDropdown: Boolean = false,
-    val onClick: () -> Unit = {}
+    val dropdownOptions: List<String> = emptyList(),
+    val onClick: () -> Unit = {},
+    val onDropdownOptionClick: (String) -> Unit = {}
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -534,13 +536,25 @@ fun RibbonToolCard(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
-                DropdownMenuItem(
-                    text = { Text("More Options...", fontSize = 12.sp) },
-                    onClick = {
-                        expanded = false
-                        tool.onClick()
+                if (tool.dropdownOptions.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("More Options...", fontSize = 12.sp) },
+                        onClick = {
+                            expanded = false
+                            tool.onClick()
+                        }
+                    )
+                } else {
+                    tool.dropdownOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option, fontSize = 12.sp) },
+                            onClick = {
+                                expanded = false
+                                tool.onDropdownOptionClick(option)
+                            }
+                        )
                     }
-                )
+                }
             }
         }
     }
@@ -676,11 +690,11 @@ fun getRibbonTools(
 
         // --- LAYOUT TAB TOOLS ---
         // 1. Page Setup Group
-        RibbonTool(id = "margins", title = "Margins", description = "Set Page Margins", icon = Icons.Outlined.SettingsOverscan, category = "Page Setup", tab = "Layout", actionId = "margins", hasDropdown = true),
-        RibbonTool(id = "orientation", title = "Orientation", description = "Page Orientation", icon = Icons.Outlined.ScreenRotation, category = "Page Setup", tab = "Layout", actionId = "orientation", hasDropdown = true),
-        RibbonTool(id = "size", title = "Size", description = "Page Size", icon = Icons.Outlined.AspectRatio, category = "Page Setup", tab = "Layout", actionId = "size", hasDropdown = true),
+        RibbonTool(id = "margins", title = "Margins", description = "Set Page Margins", icon = Icons.Outlined.SettingsOverscan, category = "Page Setup", tab = "Layout", actionId = "margins", hasDropdown = true, dropdownOptions = listOf("Normal", "Narrow", "Moderate", "Wide", "Mirrored", "Office Default", "Custom Margins...")),
+        RibbonTool(id = "orientation", title = "Orientation", description = "Page Orientation", icon = Icons.Outlined.ScreenRotation, category = "Page Setup", tab = "Layout", actionId = "orientation", hasDropdown = true, dropdownOptions = listOf("Portrait", "Landscape")),
+        RibbonTool(id = "size", title = "Size", description = "Page Size", icon = Icons.Outlined.AspectRatio, category = "Page Setup", tab = "Layout", actionId = "size", hasDropdown = true, dropdownOptions = listOf("A4", "Letter", "Legal", "A3", "A5", "Executive", "Custom Size...")),
         RibbonTool(id = "columns", title = "Columns", description = "Page Columns", icon = Icons.Outlined.ViewColumn, category = "Page Setup", tab = "Layout", actionId = "columns", hasDropdown = true),
-        RibbonTool(id = "breaks", title = "Breaks", description = "Page Breaks", icon = Icons.Outlined.KeyboardReturn, category = "Page Setup", tab = "Layout", actionId = "breaks", hasDropdown = true),
+        RibbonTool(id = "breaks", title = "Breaks", description = "Page Breaks", icon = Icons.Outlined.KeyboardReturn, category = "Page Setup", tab = "Layout", actionId = "breaks", hasDropdown = true, dropdownOptions = listOf("Page Break", "Column Break", "Section Break (Next Page)", "Section Break (Continuous)", "Section Break (Even Page)", "Section Break (Odd Page)")),
 
         // 2. Themes Group
         RibbonTool(id = "theme_apply", title = "Themes", description = "Document Themes", icon = Icons.Outlined.ColorLens, category = "Themes", tab = "Layout", actionId = "theme_apply", hasDropdown = true),
@@ -746,7 +760,10 @@ fun getRibbonTools(
             actionId = "ai_topics"
         )
     ).map { tool ->
-        tool.copy(onClick = { onActionText(tool.actionId) })
+        tool.copy(
+            onClick = { onActionText(tool.actionId) },
+            onDropdownOptionClick = { option -> onActionText("${tool.actionId}:$option") }
+        )
     }
 }
 
@@ -763,6 +780,8 @@ fun executeRibbonAction(
     onAlignmentChange: (androidx.compose.ui.text.style.TextAlign) -> Unit,
     onFontSizeChange: (androidx.compose.ui.unit.TextUnit) -> Unit,
     onLandscapeChange: (Boolean) -> Unit,
+    onShowCustomMarginsDialog: () -> Unit = {},
+    onShowCustomSizeDialog: () -> Unit = {},
     snackbarScope: kotlinx.coroutines.CoroutineScope,
     snackbarState: androidx.compose.material3.SnackbarHostState,
     tts: android.speech.tts.TextToSpeech?,
@@ -935,11 +954,11 @@ fun executeRibbonAction(
             showToast("Stylish Document Cover Page prepended at top!")
         }
         "blank_page" -> {
-            onContentChange(draftContent + "\n\n\n\n")
-            showToast("Blank spacing lines appended to note body")
+            onContentChange(draftContent + "\u000C")
+            showToast("Inserted Blank Page")
         }
         "page_break" -> {
-            onContentChange(draftContent + "\n\n---\n*PAGE DIVIDER BREAK*\n---\n\n")
+            onContentChange(draftContent + "\u000C")
             showToast("Visual page break rule appended to note body")
         }
         "insert_table" -> {
@@ -1135,6 +1154,51 @@ fun executeRibbonAction(
                               "3. Responsive tablet-layout class dynamics.\n"
             onContentChange(draftContent + topicsBlock)
             showToast("3 creative brainstorming research topics appended!")
+        }
+        else -> {
+            when {
+                actionId.startsWith("margins:") -> {
+                    val option = actionId.removePrefix("margins:")
+                    when (option) {
+                        "Normal" -> { onMarginsChange(24.dp); showToast("Margins set to Normal") }
+                        "Narrow" -> { onMarginsChange(12.dp); showToast("Margins set to Narrow") }
+                        "Moderate" -> { onMarginsChange(18.dp); showToast("Margins set to Moderate") }
+                        "Wide" -> { onMarginsChange(48.dp); showToast("Margins set to Wide") }
+                        "Mirrored" -> { onMarginsChange(36.dp); showToast("Margins set to Mirrored") }
+                        "Office Default" -> { onMarginsChange(24.dp); showToast("Margins set to Office Default") }
+                        "Custom Margins..." -> onShowCustomMarginsDialog()
+                    }
+                }
+                actionId.startsWith("orientation:") -> {
+                    val option = actionId.removePrefix("orientation:")
+                    if (option == "Landscape") {
+                        onLandscapeChange(true)
+                        showToast("Orientation set to Landscape")
+                    } else {
+                        onLandscapeChange(false)
+                        showToast("Orientation set to Portrait")
+                    }
+                }
+                actionId.startsWith("size:") -> {
+                    val option = actionId.removePrefix("size:")
+                    if (option == "Custom Size...") {
+                        onShowCustomSizeDialog()
+                    } else {
+                        showToast("Page Size set to $option")
+                    }
+                }
+                actionId.startsWith("breaks:") -> {
+                    val option = actionId.removePrefix("breaks:")
+                    if (option == "Page Break" || option == "Section Break (Next Page)" || option == "Section Break (Even Page)" || option == "Section Break (Odd Page)") {
+                         onContentChange(draftContent + "\u000C")
+                         showToast("Inserted $option")
+                    } else {
+                         // Default for column breaks and continuous section breaks which do not strictly map to page breaks
+                         onContentChange(draftContent + "\n\n--- [${option.uppercase()}] ---\n\n")
+                         showToast("Inserted $option")
+                    }
+                }
+            }
         }
     }
 }
@@ -1343,6 +1407,9 @@ fun WorkspacePane(
         var textAlignment by remember { mutableStateOf(TextAlign.Left) }
         var fontSize by remember { mutableStateOf(16.sp) }
         var isLandscape by remember { mutableStateOf(false) }
+
+        var showCustomMarginsDialog by remember { mutableStateOf(false) }
+        var showCustomSizeDialog by remember { mutableStateOf(false) }
 
         var editorTextFieldValue by remember(selectedDoc.id) {
             mutableStateOf(TextFieldValue(text = draftContent, selection = TextRange(draftContent.length)))
@@ -1640,6 +1707,8 @@ fun WorkspacePane(
                                         onAlignmentChange = { textAlignment = it },
                                         onFontSizeChange = { fontSize = it },
                                         onLandscapeChange = { isLandscape = it },
+                                        onShowCustomMarginsDialog = { showCustomMarginsDialog = true },
+                                        onShowCustomSizeDialog = { showCustomSizeDialog = true },
                                         snackbarScope = coroutineScope,
                                         snackbarState = snackbarHostState,
                                         tts = tts,
@@ -1698,6 +1767,8 @@ fun WorkspacePane(
                                             onAlignmentChange = { textAlignment = it },
                                             onFontSizeChange = { fontSize = it },
                                             onLandscapeChange = { isLandscape = it },
+                                            onShowCustomMarginsDialog = { showCustomMarginsDialog = true },
+                                            onShowCustomSizeDialog = { showCustomSizeDialog = true },
                                             snackbarScope = coroutineScope,
                                             snackbarState = snackbarHostState,
                                             tts = tts,
@@ -2798,6 +2869,19 @@ fun WorkspacePane(
                         }
                     }
                 }
+            }
+
+            if (showCustomMarginsDialog) {
+                CustomMarginsDialog(
+                    onDismiss = { showCustomMarginsDialog = false },
+                    onApply = { showCustomMarginsDialog = false }
+                )
+            }
+            if (showCustomSizeDialog) {
+                CustomSizeDialog(
+                    onDismiss = { showCustomSizeDialog = false },
+                    onApply = { showCustomSizeDialog = false }
+                )
             }
         }
     }
@@ -4249,66 +4333,105 @@ fun WordDocumentEditor(
                 .padding(20.dp),
             contentAlignment = Alignment.TopCenter
         ) {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = paperColor),
-                shape = RoundedCornerShape(4.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = paperMaxWidth)
-                    .heightIn(min = 600.dp)
+            val pages = draftContent.split("\u000C")
+            Column(
+                verticalArrangement = Arrangement.spacedBy(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(pageMargins)
-                ) {
-                    Text(
-                        text = "DOCUMENT BODY" + if (columnCount > 1) " ($columnCount Columns)" else "",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = DocWordColor.copy(alpha = 0.7f),
-                        letterSpacing = 1.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Divider(color = DocWordColor.copy(alpha = 0.15f), thickness = 1.dp)
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    if (columnCount > 1) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier.fillMaxWidth()
+                pages.forEachIndexed { pageIndex, pageContent ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = paperColor),
+                        shape = RoundedCornerShape(4.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = paperMaxWidth)
+                            .heightIn(min = 600.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(pageMargins)
                         ) {
-                            val lines = draftContent.lines()
-                            val linesPerColumn = (lines.size + columnCount - 1) / columnCount
+                            Text(
+                                text = "PAGE ${pageIndex + 1}" + if (columnCount > 1) " ($columnCount Columns)" else "",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DocWordColor.copy(alpha = 0.7f),
+                                letterSpacing = 1.sp
+                            )
 
-                            for (i in 0 until columnCount) {
-                                val colStart = i * linesPerColumn
-                                val colEnd = minOf(colStart + linesPerColumn, lines.size)
-                                val colContent = if (colStart < lines.size) {
-                                    lines.subList(colStart, colEnd).joinToString("\n")
-                                } else {
-                                    ""
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Divider(color = DocWordColor.copy(alpha = 0.15f), thickness = 1.dp)
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            if (columnCount > 1) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    val lines = pageContent.lines()
+                                    val linesPerColumn = (lines.size + columnCount - 1) / columnCount
+
+                                    for (i in 0 until columnCount) {
+                                        val colStart = i * linesPerColumn
+                                        val colEnd = minOf(colStart + linesPerColumn, lines.size)
+                                        val colContent = if (colStart < lines.size) {
+                                            lines.subList(colStart, colEnd).joinToString("\n")
+                                        } else {
+                                            ""
+                                        }
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            TextField(
+                                                value = colContent,
+                                                onValueChange = { newColText ->
+                                                    val currentLines = pageContent.lines().toMutableList()
+                                                    val linesToInsert = newColText.lines()
+
+                                                    while (currentLines.size < colEnd) {
+                                                        currentLines.add("")
+                                                    }
+                                                    val preList = currentLines.take(colStart)
+                                                    val postList = currentLines.drop(colEnd)
+
+                                                    val merged = preList + linesToInsert + postList
+                                                    val newPages = pages.toMutableList()
+                                                    newPages[pageIndex] = merged.joinToString("\n")
+                                                    onContentChange(newPages.joinToString("\u000C"))
+                                                },
+                                                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                                    color = paperTextColor,
+                                                    lineHeight = 24.sp,
+                                                    textAlign = textAlignment,
+                                                    fontSize = fontSize
+                                                ),
+                                                placeholder = { Text("Write in column ${i+1}...") },
+                                                visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
+                                                colors = TextFieldDefaults.colors(
+                                                    focusedContainerColor = Color.Transparent,
+                                                    unfocusedContainerColor = Color.Transparent,
+                                                    disabledContainerColor = Color.Transparent,
+                                                    focusedIndicatorColor = Color.Transparent,
+                                                    unfocusedIndicatorColor = Color.Transparent
+                                                ),
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .heightIn(min = 450.dp)
+                                            )
+                                        }
+                                    }
                                 }
-
-                                Column(modifier = Modifier.weight(1f)) {
+                            } else {
+                                if (pages.size == 1 && textFieldValue != null && onTextFieldValueChange != null) {
                                     TextField(
-                                        value = colContent,
-                                        onValueChange = { newColText ->
-                                            val currentLines = draftContent.lines().toMutableList()
-                                            val linesToInsert = newColText.lines()
-
-                                            while (currentLines.size < colEnd) {
-                                                currentLines.add("")
-                                            }
-                                            val preList = currentLines.take(colStart)
-                                            val postList = currentLines.drop(colEnd)
-
-                                            val merged = preList + linesToInsert + postList
-                                            onContentChange(merged.joinToString("\n"))
+                                        value = textFieldValue,
+                                        onValueChange = { newVal ->
+                                            // Ensure we don't accidentally swallow page breaks if pasted
+                                            onTextFieldValueChange(newVal)
                                         },
                                         textStyle = MaterialTheme.typography.bodyLarge.copy(
                                             color = paperTextColor,
@@ -4316,7 +4439,7 @@ fun WordDocumentEditor(
                                             textAlign = textAlignment,
                                             fontSize = fontSize
                                         ),
-                                        placeholder = { Text("Write in column ${i+1}...") },
+                                        placeholder = { Text("Write draft text here...") },
                                         visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
                                         colors = TextFieldDefaults.colors(
                                             focusedContainerColor = Color.Transparent,
@@ -4328,61 +4451,45 @@ fun WordDocumentEditor(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .heightIn(min = 450.dp)
+                                            .onFocusChanged { onFocusChanged?.invoke(it.isFocused) }
+                                            .testTag("word_editor_content_field")
+                                    )
+                                } else {
+                                    TextField(
+                                        value = pageContent,
+                                        onValueChange = { newText ->
+                                            val newPages = pages.toMutableList()
+                                            // Handle potential delete backspace merging
+                                            if (newText.isEmpty() && pageContent.isEmpty() && pages.size > 1) {
+                                                // If they edit an empty page, maybe they are trying to delete it
+                                                // We can't detect raw backspace easily without key events, but replacing text allows updates.
+                                            }
+                                            newPages[pageIndex] = newText
+                                            onContentChange(newPages.joinToString("\u000C"))
+                                        },
+                                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                            color = paperTextColor,
+                                            lineHeight = 24.sp,
+                                            textAlign = textAlignment,
+                                            fontSize = fontSize
+                                        ),
+                                        placeholder = { Text("Write draft text here...") },
+                                        visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
+                                        colors = TextFieldDefaults.colors(
+                                            focusedContainerColor = Color.Transparent,
+                                            unfocusedContainerColor = Color.Transparent,
+                                            disabledContainerColor = Color.Transparent,
+                                            focusedIndicatorColor = Color.Transparent,
+                                            unfocusedIndicatorColor = Color.Transparent
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(min = 450.dp)
+                                            .onFocusChanged { onFocusChanged?.invoke(it.isFocused) }
+                                            .testTag(if (pages.size == 1) "word_editor_content_field" else "word_editor_page_$pageIndex")
                                     )
                                 }
                             }
-                        }
-                    } else {
-                        if (textFieldValue != null && onTextFieldValueChange != null) {
-                            TextField(
-                                value = textFieldValue,
-                                onValueChange = onTextFieldValueChange,
-                                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                                    color = paperTextColor,
-                                    lineHeight = 24.sp,
-                                    textAlign = textAlignment,
-                                    fontSize = fontSize
-                                ),
-                                placeholder = { Text("Write draft text here...") },
-                                visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    disabledContainerColor = Color.Transparent,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 450.dp)
-                                    .onFocusChanged { onFocusChanged?.invoke(it.isFocused) }
-                                    .testTag("word_editor_content_field")
-                            )
-                        } else {
-                            TextField(
-                                value = draftContent,
-                                onValueChange = onContentChange,
-                                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                                    color = paperTextColor,
-                                    lineHeight = 24.sp,
-                                    textAlign = textAlignment,
-                                    fontSize = fontSize
-                                ),
-                                placeholder = { Text("Write draft text here...") },
-                                visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    disabledContainerColor = Color.Transparent,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 450.dp)
-                                    .onFocusChanged { onFocusChanged?.invoke(it.isFocused) }
-                                    .testTag("word_editor_content_field")
-                            )
                         }
                     }
                 }
@@ -5182,4 +5289,63 @@ fun TypeSelectionRow(
             }
         }
     }
+}
+
+@Composable
+fun CustomMarginsDialog(
+    onDismiss: () -> Unit,
+    onApply: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Custom Margins") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = "1\"", onValueChange = {}, label = { Text("Top") })
+                OutlinedTextField(value = "1\"", onValueChange = {}, label = { Text("Bottom") })
+                OutlinedTextField(value = "1\"", onValueChange = {}, label = { Text("Left") })
+                OutlinedTextField(value = "1\"", onValueChange = {}, label = { Text("Right") })
+                OutlinedTextField(value = "0\"", onValueChange = {}, label = { Text("Gutter") })
+                OutlinedTextField(value = "Left", onValueChange = {}, label = { Text("Gutter Position") })
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onApply) {
+                Text("Apply")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun CustomSizeDialog(
+    onDismiss: () -> Unit,
+    onApply: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Custom Size") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(value = "8.5", onValueChange = {}, label = { Text("Width") })
+                OutlinedTextField(value = "11", onValueChange = {}, label = { Text("Height") })
+                OutlinedTextField(value = "inch", onValueChange = {}, label = { Text("Measurement Unit") })
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onApply) {
+                Text("Apply")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
