@@ -43,9 +43,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import kotlin.text.RegexOption
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.animation.core.spring
@@ -686,7 +688,7 @@ fun getRibbonTools(
         RibbonTool(id = "hyperlink", title = "Link", description = "Link", icon = Icons.Outlined.Link, category = "Links", tab = "Insert", actionId = "hyperlink"),
         RibbonTool(id = "bookmark", title = "Bookmark", description = "Bookmark", icon = Icons.Outlined.Bookmark, category = "Links", tab = "Insert", actionId = "bookmark"),
         RibbonTool(id = "header_footer", title = "Header & Footer", description = "Header & Footer", icon = Icons.Outlined.ViewAgenda, category = "Header & Footer", tab = "Insert", actionId = "header_footer"),
-        RibbonTool(id = "page_number", title = "Page Number", description = "Page Number", icon = Icons.Outlined.Numbers, category = "Header & Footer", tab = "Insert", actionId = "page_number", hasDropdown = true, dropdownOptions = listOf("Top Left", "Top Center", "Top Right", "Bottom Left", "Bottom Center", "Bottom Right", "Left Margin", "Right Margin", "Outside Margin", "Inside Margin", "Current Position", "Format Page Numbers...", "Remove Page Numbers")),
+        RibbonTool(id = "page_number", title = "Page Number", description = "Page Number", icon = Icons.Outlined.Numbers, category = "Header & Footer", tab = "Insert", actionId = "page_number", hasDropdown = true, dropdownOptions = listOf("Top of Page", "Bottom of Page", "Page Margins", "Current Position", "Format Page Numbers...", "Remove Page Numbers")),
         RibbonTool(id = "text_box", title = "Text Box", description = "Text Box", icon = Icons.Outlined.TextFields, category = "Text", tab = "Insert", actionId = "text_box"),
 
         // --- LAYOUT TAB TOOLS ---
@@ -784,6 +786,7 @@ fun executeRibbonAction(
     onShowCustomMarginsDialog: () -> Unit = {},
     onShowCustomSizeDialog: () -> Unit = {},
     onShowPageNumberFormatDialog: () -> Unit = {},
+    onShowPageNumberPositionMenu: (String) -> Unit = {},
     onPageNumberPositionChange: (String?) -> Unit = {},
     snackbarScope: kotlinx.coroutines.CoroutineScope,
     snackbarState: androidx.compose.material3.SnackbarHostState,
@@ -1170,10 +1173,11 @@ fun executeRibbonAction(
                         }
                         "Current Position" -> {
                             // "Current Position" inserts the page number directly into the document content at cursor.
-                            // But as per the implementation, you can't easily hook into cursor.
-                            // We can append it for now or rely on the UI position rendering.
                             onContentChange(draftContent + " 1 ")
                             showToast("Inserted Page Number")
+                        }
+                        "Top of Page", "Bottom of Page", "Page Margins" -> {
+                            onShowPageNumberPositionMenu(option)
                         }
                         else -> {
                             onPageNumberPositionChange(option)
@@ -1438,6 +1442,7 @@ fun WorkspacePane(
         var pageNumberPosition by remember { mutableStateOf<String?>(null) }
         var pageNumberFormat by remember { mutableStateOf("1, 2, 3...") }
         var pageNumberStartAt by remember { mutableStateOf("1") }
+        var pageNumberPositionMenu by remember { mutableStateOf<String?>(null) }
 
         var editorTextFieldValue by remember(selectedDoc.id) {
             mutableStateOf(TextFieldValue(text = draftContent, selection = TextRange(draftContent.length)))
@@ -1741,6 +1746,7 @@ fun WorkspacePane(
                                         onShowCustomMarginsDialog = { showCustomMarginsDialog = true },
                                         onShowCustomSizeDialog = { showCustomSizeDialog = true },
                                         onShowPageNumberFormatDialog = { showPageNumberFormatDialog = true },
+                                        onShowPageNumberPositionMenu = { pageNumberPositionMenu = it },
                                         onPageNumberPositionChange = { pageNumberPosition = it },
                                         snackbarScope = coroutineScope,
                                         snackbarState = snackbarHostState,
@@ -1803,6 +1809,7 @@ fun WorkspacePane(
                                             onShowCustomMarginsDialog = { showCustomMarginsDialog = true },
                                             onShowCustomSizeDialog = { showCustomSizeDialog = true },
                                             onShowPageNumberFormatDialog = { showPageNumberFormatDialog = true },
+                                            onShowPageNumberPositionMenu = { pageNumberPositionMenu = it },
                                             onPageNumberPositionChange = { pageNumberPosition = it },
                                             snackbarScope = coroutineScope,
                                             snackbarState = snackbarHostState,
@@ -2930,6 +2937,37 @@ fun WorkspacePane(
                         pageNumberFormat = format
                         pageNumberStartAt = startAt
                         showPageNumberFormatDialog = false
+                    }
+                )
+            }
+            if (pageNumberPositionMenu != null) {
+                val menuTitle = pageNumberPositionMenu!!
+                val options = when (menuTitle) {
+                    "Top of Page" -> listOf("Top Left", "Top Center", "Top Right")
+                    "Bottom of Page" -> listOf("Bottom Left", "Bottom Center", "Bottom Right")
+                    "Page Margins" -> listOf("Left Margin", "Right Margin", "Outside Margin", "Inside Margin")
+                    else -> emptyList()
+                }
+                AlertDialog(
+                    onDismissRequest = { pageNumberPositionMenu = null },
+                    title = { Text(menuTitle) },
+                    text = {
+                        Column {
+                            options.forEach { option ->
+                                TextButton(
+                                    onClick = {
+                                        pageNumberPosition = option
+                                        pageNumberPositionMenu = null
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(option, textAlign = TextAlign.Left, modifier = Modifier.fillMaxWidth())
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { pageNumberPositionMenu = null }) { Text("Cancel") }
                     }
                 )
             }
@@ -4411,7 +4449,11 @@ fun WordDocumentEditor(
         else -> Color(0xFF2D2D2D)
     }
 
+    // Page constraints
     val paperMaxWidth = if (isLandscape) 1000.dp else 680.dp
+    val pageHeight = if (isLandscape) 750.dp else 1056.dp
+    
+    var targetFocusPage by remember { mutableStateOf<Int?>(null) }
 
     Column(modifier = modifier) {
         // Main Document Paper Container View
@@ -4419,11 +4461,13 @@ fun WordDocumentEditor(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp),
             contentAlignment = Alignment.TopCenter
         ) {
             val pages = draftContent.split("\u000C")
+            
             Column(
                 verticalArrangement = Arrangement.spacedBy(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -4437,176 +4481,172 @@ fun WordDocumentEditor(
                         modifier = Modifier
                             .fillMaxWidth()
                             .widthIn(max = paperMaxWidth)
-                            .heightIn(min = 600.dp)
+                            .height(pageHeight)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .fillMaxHeight()
                                 .padding(pageMargins)
                         ) {
                             val computedPageNumber = formatPageNumber(pageIndex + pageNumberStartAt, pageNumberFormat)
                             
                             // Header
-                            if (pageNumberPosition != null && pageNumberPosition.startsWith("Top")) {
-                                Box(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
-                                    Text(
-                                        text = computedPageNumber,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = DocWordColor.copy(alpha = 0.5f),
-                                        modifier = Modifier.align(
-                                            when {
-                                                pageNumberPosition.contains("Left") -> Alignment.CenterStart
-                                                pageNumberPosition.contains("Right") -> Alignment.CenterEnd
-                                                else -> Alignment.Center
-                                            }
-                                        )
+                            if (pageNumberPosition?.startsWith("Top") == true) {
+                                Text(
+                                    text = computedPageNumber,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DocWordColor.copy(alpha = 0.5f),
+                                    modifier = Modifier.align(
+                                        when {
+                                            pageNumberPosition.contains("Left") -> Alignment.Start
+                                            pageNumberPosition.contains("Right") -> Alignment.End
+                                            else -> Alignment.CenterHorizontally
+                                        }
                                     )
-                                }
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
                             }
                             
                             if (columnCount > 1) {
+                                // Multi-column read-only representation for MS Word
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(24.dp)
                                 ) {
-                                    val lines = pageContent.lines()
-                                    val linesPerColumn = (lines.size + columnCount - 1) / columnCount
-
                                     for (i in 0 until columnCount) {
-                                        val colStart = i * linesPerColumn
-                                        val colEnd = minOf(colStart + linesPerColumn, lines.size)
-                                        val colContent = if (colStart < lines.size) {
-                                            lines.subList(colStart, colEnd).joinToString("\n")
-                                        } else {
-                                            ""
-                                        }
-
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            TextField(
-                                                value = colContent,
-                                                onValueChange = { newColText ->
-                                                    val currentLines = pageContent.lines().toMutableList()
-                                                    val linesToInsert = newColText.lines()
-
-                                                    while (currentLines.size < colEnd) {
-                                                        currentLines.add("")
-                                                    }
-                                                    val preList = currentLines.take(colStart)
-                                                    val postList = currentLines.drop(colEnd)
-
-                                                    val merged = preList + linesToInsert + postList
-                                                    val newPages = pages.toMutableList()
-                                                    newPages[pageIndex] = merged.joinToString("\n")
-                                                    onContentChange(newPages.joinToString("\u000C"))
-                                                },
-                                                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                                                    color = paperTextColor,
-                                                    lineHeight = 24.sp,
-                                                    textAlign = textAlignment,
-                                                    fontSize = fontSize
-                                                ),
-                                                placeholder = { Text("Write in column ${i+1}...") },
-                                                visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
-                                                colors = TextFieldDefaults.colors(
-                                                    focusedContainerColor = Color.Transparent,
-                                                    unfocusedContainerColor = Color.Transparent,
-                                                    disabledContainerColor = Color.Transparent,
-                                                    focusedIndicatorColor = Color.Transparent,
-                                                    unfocusedIndicatorColor = Color.Transparent
-                                                ),
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .heightIn(min = 450.dp)
-                                            )
-                                        }
+                                        Text(
+                                            text = pageContent,
+                                            color = paperTextColor,
+                                            fontSize = fontSize,
+                                            textAlign = textAlignment,
+                                            modifier = Modifier.weight(1f)
+                                        )
                                     }
                                 }
                             } else {
-                                if (pages.size == 1 && textFieldValue != null && onTextFieldValueChange != null) {
-                                    TextField(
-                                        value = textFieldValue,
-                                        onValueChange = { newVal ->
-                                            // Ensure we don't accidentally swallow page breaks if pasted
-                                            onTextFieldValueChange(newVal)
-                                        },
-                                        textStyle = MaterialTheme.typography.bodyLarge.copy(
-                                            color = paperTextColor,
-                                            lineHeight = 24.sp,
-                                            textAlign = textAlignment,
-                                            fontSize = fontSize
-                                        ),
-                                        placeholder = { Text("Write draft text here...") },
-                                        visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
-                                        colors = TextFieldDefaults.colors(
-                                            focusedContainerColor = Color.Transparent,
-                                            unfocusedContainerColor = Color.Transparent,
-                                            disabledContainerColor = Color.Transparent,
-                                            focusedIndicatorColor = Color.Transparent,
-                                            unfocusedIndicatorColor = Color.Transparent
-                                        ),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .heightIn(min = 450.dp)
-                                            .onFocusChanged { onFocusChanged?.invoke(it.isFocused) }
-                                            .testTag("word_editor_content_field")
-                                    )
-                                } else {
-                                    TextField(
-                                        value = pageContent,
-                                        onValueChange = { newText ->
-                                            val newPages = pages.toMutableList()
-                                            // Handle potential delete backspace merging
-                                            if (newText.isEmpty() && pageContent.isEmpty() && pages.size > 1) {
-                                                // If they edit an empty page, maybe they are trying to delete it
-                                                // We can't detect raw backspace easily without key events, but replacing text allows updates.
-                                            }
-                                            newPages[pageIndex] = newText
-                                            onContentChange(newPages.joinToString("\u000C"))
-                                        },
-                                        textStyle = MaterialTheme.typography.bodyLarge.copy(
-                                            color = paperTextColor,
-                                            lineHeight = 24.sp,
-                                            textAlign = textAlignment,
-                                            fontSize = fontSize
-                                        ),
-                                        placeholder = { Text("Write draft text here...") },
-                                        visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
-                                        colors = TextFieldDefaults.colors(
-                                            focusedContainerColor = Color.Transparent,
-                                            unfocusedContainerColor = Color.Transparent,
-                                            disabledContainerColor = Color.Transparent,
-                                            focusedIndicatorColor = Color.Transparent,
-                                            unfocusedIndicatorColor = Color.Transparent
-                                        ),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .heightIn(min = 450.dp)
-                                            .onFocusChanged { onFocusChanged?.invoke(it.isFocused) }
-                                            .testTag(if (pages.size == 1) "word_editor_content_field" else "word_editor_page_$pageIndex")
-                                    )
+                                val focusRequester = remember(pageIndex) { androidx.compose.ui.focus.FocusRequester() }
+                                
+                                LaunchedEffect(targetFocusPage) {
+                                    if (targetFocusPage == pageIndex) {
+                                        androidx.compose.ui.focus.FocusRequester.Default // just to be safe
+                                        try {
+                                            focusRequester.requestFocus()
+                                        } catch(e: Exception) {}
+                                    }
                                 }
+                                
+                                var textFieldHeightPx by remember { mutableIntStateOf(0) }
+                                var splitOffset by remember { mutableIntStateOf(-1) }
+                                
+                                LaunchedEffect(splitOffset) {
+                                    if (splitOffset != -1 && splitOffset < pageContent.length) {
+                                        val newPages = pages.toMutableList()
+                                        val keptContent = pageContent.substring(0, splitOffset)
+                                        val overflowContent = pageContent.substring(splitOffset)
+                                        
+                                        newPages[pageIndex] = keptContent
+                                        if (pageIndex + 1 < newPages.size) {
+                                            newPages[pageIndex + 1] = overflowContent + newPages[pageIndex + 1]
+                                        } else {
+                                            newPages.add(overflowContent)
+                                        }
+                                        
+                                        targetFocusPage = pageIndex + 1
+                                        
+                                        val newFullText = newPages.joinToString("\u000C")
+                                        onContentChange(newFullText)
+                                        onTextFieldValueChange?.invoke(TextFieldValue(text = newFullText))
+                                        splitOffset = -1
+                                    }
+                                }
+                                
+                                BasicTextField(
+                                    value = pageContent,
+                                    onValueChange = { newText: String ->
+                                        val newPages = pages.toMutableList()
+                                        
+                                        // Handle potential delete backspace merging (deleted PageBreak)
+                                        if (newText.isEmpty() && pageContent.isEmpty() && pages.size > 1 && pageIndex > 0) {
+                                            newPages.removeAt(pageIndex)
+                                            targetFocusPage = pageIndex - 1
+                                            val newFullText = newPages.joinToString("\u000C")
+                                            onContentChange(newFullText)
+                                            onTextFieldValueChange?.invoke(TextFieldValue(text = newFullText))
+                                        } else {
+                                            newPages[pageIndex] = newText
+                                            val newFullText = newPages.joinToString("\u000C")
+                                            onContentChange(newFullText)
+                                            onTextFieldValueChange?.invoke(TextFieldValue(text = newFullText))
+                                        }
+                                    },
+                                    onTextLayout = { result: androidx.compose.ui.text.TextLayoutResult ->
+                                        if (textFieldHeightPx > 0 && result.size.height > textFieldHeightPx) {
+                                            val availableHeight = textFieldHeightPx.toFloat()
+                                            val line = (0 until result.lineCount).findLast { result.getLineBottom(it) <= availableHeight }
+                                            if (line != null && line < result.lineCount - 1 && line > 0 && splitOffset == -1) {
+                                                splitOffset = result.getLineEnd(line)
+                                            } else if (line == 0 && splitOffset == -1 && result.lineCount > 1) {
+                                                splitOffset = result.getLineEnd(0)
+                                            }
+                                        }
+                                    },
+                                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                        color = paperTextColor,
+                                        lineHeight = 24.sp,
+                                        textAlign = textAlignment,
+                                        fontSize = fontSize
+                                    ),
+                                    visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f) // Ensure it fills available vertical space inside Column
+                                        .onGloballyPositioned { textFieldHeightPx = it.size.height }
+                                        .focusRequester(focusRequester)
+                                        .onFocusChanged { 
+                                            if (it.isFocused) {
+                                                onFocusChanged?.invoke(true)
+                                            }
+                                        }
+                                        .testTag("word_editor_content_field"),
+                                    decorationBox = { innerTextField ->
+                                        Box(modifier = Modifier.fillMaxSize()) {
+                                            if (pageContent.isEmpty()) {
+                                                Text(
+                                                    "Start typing your new document here...", 
+                                                    color = Color.Gray.copy(alpha = 0.7f),
+                                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                                        lineHeight = 24.sp,
+                                                        textAlign = textAlignment,
+                                                        fontSize = fontSize
+                                                    )
+                                                )
+                                            }
+                                            innerTextField()
+                                        }
+                                    }
+                                )
                             }
                             
                             // Footer
                             if (pageNumberPosition != null && (pageNumberPosition.startsWith("Bottom") || pageNumberPosition.contains("Margin"))) {
-                                Box(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-                                    Text(
-                                        text = computedPageNumber,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = DocWordColor.copy(alpha = 0.5f),
-                                        modifier = Modifier.align(
-                                            when {
-                                                pageNumberPosition.contains("Left") -> Alignment.CenterStart
-                                                pageNumberPosition.contains("Right") -> Alignment.CenterEnd
-                                                pageNumberPosition.contains("Outside Margin") -> if (pageIndex % 2 == 0) Alignment.CenterEnd else Alignment.CenterStart
-                                                pageNumberPosition.contains("Inside Margin") -> if (pageIndex % 2 == 0) Alignment.CenterStart else Alignment.CenterEnd
-                                                else -> Alignment.Center
-                                            }
-                                        )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = computedPageNumber,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = DocWordColor.copy(alpha = 0.5f),
+                                    modifier = Modifier.align(
+                                        when {
+                                            pageNumberPosition.contains("Left") -> Alignment.Start
+                                            pageNumberPosition.contains("Right") -> Alignment.End
+                                            pageNumberPosition.contains("Outside Margin") -> if (pageIndex % 2 == 0) Alignment.End else Alignment.Start
+                                            pageNumberPosition.contains("Inside Margin") -> if (pageIndex % 2 == 0) Alignment.Start else Alignment.End
+                                            else -> Alignment.CenterHorizontally
+                                        }
                                     )
-                                }
+                                )
                             }
                         }
                     }
@@ -4615,6 +4655,7 @@ fun WordDocumentEditor(
         }
     }
 }
+
 
 // --- 2. JC SPREADSHEET EDITOR ---
 @Composable

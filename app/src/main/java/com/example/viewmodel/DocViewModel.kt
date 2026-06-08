@@ -154,7 +154,7 @@ class DocViewModel(application: Application) : AndroidViewModel(application) {
     fun createNewDocument(title: String, type: String) {
         viewModelScope.launch {
             val initialContent = when (type) {
-                "word" -> "Start typing your new document here..."
+                "word" -> ""
                 "sheet" -> JSONObject().apply {
                     put("A1", "My Sheet")
                 }.toString()
