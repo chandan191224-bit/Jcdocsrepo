@@ -490,88 +490,56 @@ fun RibbonToolCard(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isDarkTheme) Color(0xFF323238) else Color(0xFFF1F3F6)
-        ),
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .combinedClickable(
-                onClick = { 
-                    if (tool.hasDropdown) expanded = true 
-                    else tool.onClick() 
-                },
-                onDoubleClick = { tool.onClick() },
-                onLongClick = { tool.onClick() }
-            )
-    ) {
-        Box {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.White),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = tool.icon,
-                        contentDescription = tool.title,
-                        tint = if (isDarkTheme) Color.White else Color.Black,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(6.dp))
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = tool.title,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = if (isDarkTheme) Color.White else Color.Black
-                    )
-                    Text(
-                        text = tool.description,
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Normal,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = Color.Gray
-                    )
-                }
-                if (tool.hasDropdown) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Dropdown Options",
-                        tint = if (isDarkTheme) Color.LightGray else Color.DarkGray,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+            .clip(RoundedCornerShape(6.dp))
+            .clickable { 
+                if (tool.hasDropdown) expanded = true 
+                else tool.onClick() 
             }
-            if (tool.hasDropdown) {
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("More Options...", fontSize = 12.sp) },
-                        onClick = {
-                            expanded = false
-                            tool.onClick()
-                        }
-                    )
-                }
+            .padding(vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = tool.icon,
+                contentDescription = tool.title,
+                tint = if (isDarkTheme) Color.White.copy(alpha = 0.85f) else Color.DarkGray,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = tool.title,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = if (isDarkTheme) Color.LightGray else Color.DarkGray,
+                textAlign = TextAlign.Center
+            )
+        }
+        if (tool.hasDropdown) {
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                tint = if (isDarkTheme) Color.LightGray else Color.DarkGray,
+                modifier = Modifier.size(12.dp).align(Alignment.CenterEnd).padding(end = 4.dp)
+            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("More Options...", fontSize = 12.sp) },
+                    onClick = {
+                        expanded = false
+                        tool.onClick()
+                    }
+                )
             }
         }
     }
@@ -585,27 +553,27 @@ fun getRibbonTools(
         // --- HOME TAB TOOLS ---
         RibbonTool(
             id = "bold",
-            title = "Bold Text",
+            title = "Bold",
             description = "Apply bold style layout",
-            icon = Icons.Default.Build,
+            icon = Icons.Default.FormatBold,
             category = "Font Formatting",
             tab = "Home",
             actionId = "bold"
         ),
         RibbonTool(
             id = "italic",
-            title = "Italic Style",
+            title = "Italic",
             description = "Apply italic text",
-            icon = Icons.Default.Refresh,
+            icon = Icons.Default.FormatItalic,
             category = "Font Formatting",
             tab = "Home",
             actionId = "italic"
         ),
         RibbonTool(
             id = "underline",
-            title = "Underline Text",
+            title = "Underline",
             description = "Apply text underlining",
-            icon = Icons.Default.KeyboardArrowDown,
+            icon = Icons.Default.FormatUnderlined,
             category = "Font Formatting",
             tab = "Home",
             actionId = "underline"
@@ -614,16 +582,16 @@ fun getRibbonTools(
             id = "align_left",
             title = "Align Left",
             description = "Position text on the left",
-            icon = Icons.Default.Menu,
+            icon = Icons.Default.FormatAlignLeft,
             category = "Paragraph Alignment",
             tab = "Home",
             actionId = "align_left"
         ),
         RibbonTool(
             id = "align_center",
-            title = "Align Center",
+            title = "Center",
             description = "Center document paragraph",
-            icon = Icons.Default.MoreVert,
+            icon = Icons.Default.FormatAlignCenter,
             category = "Paragraph Alignment",
             tab = "Home",
             actionId = "align_center"
@@ -632,52 +600,52 @@ fun getRibbonTools(
             id = "align_right",
             title = "Align Right",
             description = "Position text on the right",
-            icon = Icons.Default.Menu,
+            icon = Icons.Default.FormatAlignRight,
             category = "Paragraph Alignment",
             tab = "Home",
             actionId = "align_right"
         ),
         RibbonTool(
             id = "theme_white",
-            title = "White Theme",
+            title = "White Mode",
             description = "Select white paper backdrop",
-            icon = Icons.Default.Info,
+            icon = Icons.Default.LightMode,
             category = "Page Theme Layout",
             tab = "Home",
             actionId = "theme_white"
         ),
         RibbonTool(
             id = "theme_ivory",
-            title = "Ivory Theme",
+            title = "Ivory Mode",
             description = "Select warm notepad tone",
-            icon = Icons.Default.Star,
+            icon = Icons.Default.WbSunny,
             category = "Page Theme Layout",
             tab = "Home",
             actionId = "theme_ivory"
         ),
         RibbonTool(
             id = "theme_dark",
-            title = "OLED Dark Theme",
+            title = "Dark Mode",
             description = "Select low-light layout canvas",
-            icon = Icons.Default.Lock,
+            icon = Icons.Default.DarkMode,
             category = "Page Theme Layout",
             tab = "Home",
             actionId = "theme_dark"
         ),
         RibbonTool(
             id = "font_incr",
-            title = "Enlarge Font",
+            title = "Increase Font",
             description = "Increase font text size",
-            icon = Icons.Default.Add,
+            icon = Icons.Default.TextIncrease,
             category = "Text Size Scale",
             tab = "Home",
             actionId = "font_incr"
         ),
         RibbonTool(
             id = "font_decr",
-            title = "Reduce Font",
+            title = "Decrease Font",
             description = "Decrease font text size",
-            icon = Icons.Default.Delete,
+            icon = Icons.Default.TextDecrease,
             category = "Text Size Scale",
             tab = "Home",
             actionId = "font_decr"
@@ -693,159 +661,58 @@ fun getRibbonTools(
         ),
 
         // --- INSERT TAB TOOLS ---
-        // 1. Pages Group
-        RibbonTool(id = "cover_page", title = "Cover Page", description = "Inserts a pre-designed cover page template", icon = Icons.Default.Person, category = "Pages", tab = "Insert", actionId = "cover_page"),
-        RibbonTool(id = "blank_page", title = "Blank Page", description = "Inserts a new blank page into the document", icon = Icons.Default.Add, category = "Pages", tab = "Insert", actionId = "blank_page"),
-        RibbonTool(id = "page_break", title = "Page Break", description = "Forces all following content onto the next page", icon = Icons.Default.Menu, category = "Pages", tab = "Insert", actionId = "page_break"),
-        RibbonTool(id = "insert_page_before", title = "Insert Page Before", description = "Inserts a blank page before the current page", icon = Icons.Default.KeyboardArrowUp, category = "Pages", tab = "Insert", actionId = "insert_page_before"),
-        RibbonTool(id = "insert_page_after", title = "Insert Page After", description = "Inserts a blank page after the current page", icon = Icons.Default.KeyboardArrowDown, category = "Pages", tab = "Insert", actionId = "insert_page_after"),
-        RibbonTool(id = "section_break", title = "Section Break", description = "Inserts a section break", icon = Icons.Default.List, category = "Pages", tab = "Insert", actionId = "section_break"),
-
-        // 2. Tables Group
-        RibbonTool(id = "insert_table", title = "Insert Table", description = "Insert Table", icon = Icons.Default.List, category = "Tables", tab = "Insert", actionId = "insert_table"),
-        RibbonTool(id = "draw_table", title = "Draw Table", description = "Draw Table", icon = Icons.Default.Create, category = "Tables", tab = "Insert", actionId = "draw_table"),
-        RibbonTool(id = "quick_tables", title = "Quick Tables", description = "Quick Tables", icon = Icons.Default.AddCircle, category = "Tables", tab = "Insert", actionId = "quick_tables"),
-        RibbonTool(id = "excel_style_tables", title = "Excel Tables", description = "Excel-style Tables", icon = Icons.Default.Menu, category = "Tables", tab = "Insert", actionId = "excel_style_tables"),
-        RibbonTool(id = "merge_cells", title = "Merge Cells", description = "Merge Cells", icon = Icons.Default.Add, category = "Tables", tab = "Insert", actionId = "merge_cells"),
-        RibbonTool(id = "split_cells", title = "Split Cells", description = "Split Cells", icon = Icons.Default.Clear, category = "Tables", tab = "Insert", actionId = "split_cells"),
-
-        // 3. Illustrations Group
-        RibbonTool(id = "pic_gallery", title = "Gallery Photo", description = "Gallery Photo", icon = Icons.Default.Face, category = "Illustrations", tab = "Insert", actionId = "pic_gallery"),
-        RibbonTool(id = "pic_camera", title = "Camera Capture", description = "Camera Capture", icon = Icons.Default.AccountBox, category = "Illustrations", tab = "Insert", actionId = "pic_camera"),
-        RibbonTool(id = "pic_android_file_picker", title = "File Picker", description = "Android File Picker", icon = Icons.Default.List, category = "Illustrations", tab = "Insert", actionId = "pic_android_file_picker"),
-        RibbonTool(id = "pic_google_photos", title = "Google Photos", description = "Google Photos", icon = Icons.Default.Face, category = "Illustrations", tab = "Insert", actionId = "pic_google_photos"),
-        RibbonTool(id = "pic_google_drive", title = "Google Drive", description = "Google Drive", icon = Icons.Default.Add, category = "Illustrations", tab = "Insert", actionId = "pic_google_drive"),
-        RibbonTool(id = "pic_onedrive", title = "OneDrive", description = "OneDrive", icon = Icons.Default.Search, category = "Illustrations", tab = "Insert", actionId = "pic_onedrive"),
-        RibbonTool(id = "pic_dropbox", title = "Dropbox", description = "Dropbox", icon = Icons.Default.Share, category = "Illustrations", tab = "Insert", actionId = "pic_dropbox"),
-        RibbonTool(id = "clip_art", title = "Clip Art", description = "Clip Art", icon = Icons.Default.Favorite, category = "Illustrations", tab = "Insert", actionId = "clip_art"),
-        RibbonTool(id = "shapes", title = "Shapes", description = "Shapes", icon = Icons.Default.Star, category = "Illustrations", tab = "Insert", actionId = "shapes"),
-        RibbonTool(id = "smartart", title = "SmartArt", description = "SmartArt", icon = Icons.Default.Info, category = "Illustrations", tab = "Insert", actionId = "smartart"),
-        RibbonTool(id = "chart", title = "Chart", description = "Chart", icon = Icons.Default.List, category = "Illustrations", tab = "Insert", actionId = "chart"),
-        RibbonTool(id = "screenshot", title = "Screenshot", description = "Screenshot", icon = Icons.Default.Search, category = "Illustrations", tab = "Insert", actionId = "screenshot"),
-        RibbonTool(id = "icons_ill", title = "Icons", description = "Icons", icon = Icons.Default.Star, category = "Illustrations", tab = "Insert", actionId = "icons_ill"),
-        RibbonTool(id = "qr_code", title = "QR Code", description = "QR Code", icon = Icons.Default.Build, category = "Illustrations", tab = "Insert", actionId = "qr_code"),
-        RibbonTool(id = "barcode", title = "Barcode", description = "Barcode", icon = Icons.Default.Menu, category = "Illustrations", tab = "Insert", actionId = "barcode"),
-        RibbonTool(id = "ai_generated_image", title = "AI Image", description = "AI Generated Image", icon = Icons.Default.Face, category = "Illustrations", tab = "Insert", actionId = "ai_generated_image"),
-
-        // 4. Links Group
-        RibbonTool(id = "hyperlink", title = "Hyperlink", description = "Hyperlink", icon = Icons.Default.Share, category = "Links", tab = "Insert", actionId = "hyperlink"),
-        RibbonTool(id = "bookmark", title = "Bookmark", description = "Bookmark", icon = Icons.Default.Star, category = "Links", tab = "Insert", actionId = "bookmark"),
-        RibbonTool(id = "cross_reference", title = "Cross-reference", description = "Cross-reference", icon = Icons.Default.Refresh, category = "Links", tab = "Insert", actionId = "cross_reference"),
-
-        // 5. Header & Footer Group
-        RibbonTool(id = "header", title = "Header", description = "Header", icon = Icons.Default.KeyboardArrowUp, category = "Header & Footer", tab = "Insert", actionId = "header"),
-        RibbonTool(id = "footer", title = "Footer", description = "Footer", icon = Icons.Default.KeyboardArrowDown, category = "Header & Footer", tab = "Insert", actionId = "footer"),
-        RibbonTool(id = "page_number", title = "Page Number", description = "Page Number", icon = Icons.Default.List, category = "Header & Footer", tab = "Insert", actionId = "page_number"),
-
-        // 6. Text Group
-        RibbonTool(id = "text_box", title = "Text Box", description = "Text Box", icon = Icons.Default.Create, category = "Text", tab = "Insert", actionId = "text_box"),
-        RibbonTool(id = "quick_parts", title = "Quick Parts", description = "Quick Parts", icon = Icons.Default.Build, category = "Text", tab = "Insert", actionId = "quick_parts"),
-        RibbonTool(id = "wordart", title = "WordArt", description = "WordArt", icon = Icons.Default.Star, category = "Text", tab = "Insert", actionId = "wordart"),
-        RibbonTool(id = "drop_cap", title = "Drop Cap", description = "Drop Cap", icon = Icons.Default.List, category = "Text", tab = "Insert", actionId = "drop_cap"),
-        RibbonTool(id = "date_time", title = "Date & Time", description = "Date & Time", icon = Icons.Default.Info, category = "Text", tab = "Insert", actionId = "date_time"),
-        RibbonTool(id = "object_inserted", title = "Object", description = "Object", icon = Icons.Default.Build, category = "Text", tab = "Insert", actionId = "object_inserted"),
-        RibbonTool(id = "watermark", title = "Watermark", description = "Watermark", icon = Icons.Default.Info, category = "Text", tab = "Insert", actionId = "watermark"),
-        RibbonTool(id = "signature", title = "Signature", description = "Signature", icon = Icons.Default.Edit, category = "Text", tab = "Insert", actionId = "signature"),
-        RibbonTool(id = "comment_box", title = "Comment Box", description = "Comment Box", icon = Icons.Default.Email, category = "Text", tab = "Insert", actionId = "comment_box"),
-
-        // 7. Symbols Group
-        RibbonTool(id = "equation", title = "Equation", description = "Equation", icon = Icons.Default.Info, category = "Symbols", tab = "Insert", actionId = "equation"),
-        RibbonTool(id = "symbol", title = "Symbol", description = "Symbol", icon = Icons.Default.Star, category = "Symbols", tab = "Insert", actionId = "symbol"),
-
-        // 8. Signature Group
-        RibbonTool(id = "formal_signature_line", title = "Signature Line", description = "Signature Line", icon = Icons.Default.Edit, category = "Signature", tab = "Insert", actionId = "formal_signature_line"),
+        RibbonTool(id = "cover_page", title = "Cover Page", description = "Cover Page", icon = Icons.Default.Description, category = "Pages", tab = "Insert", actionId = "cover_page"),
+        RibbonTool(id = "blank_page", title = "Blank Page", description = "Blank Page", icon = Icons.Default.NoteAdd, category = "Pages", tab = "Insert", actionId = "blank_page"),
+        RibbonTool(id = "page_break", title = "Page Break", description = "Page Break", icon = Icons.Default.VerticalAlignBottom, category = "Pages", tab = "Insert", actionId = "page_break"),
+        RibbonTool(id = "insert_table", title = "Table", description = "Insert Table", icon = Icons.Default.TableChart, category = "Tables", tab = "Insert", actionId = "insert_table"),
+        RibbonTool(id = "picture", title = "Picture", description = "Picture", icon = Icons.Default.Image, category = "Illustrations", tab = "Insert", actionId = "picture"),
+        RibbonTool(id = "shapes", title = "Shapes", description = "Shapes", icon = Icons.Default.Category, category = "Illustrations", tab = "Insert", actionId = "shapes"),
+        RibbonTool(id = "chart", title = "Chart", description = "Chart", icon = Icons.Default.BarChart, category = "Illustrations", tab = "Insert", actionId = "chart"),
+        RibbonTool(id = "hyperlink", title = "Link", description = "Link", icon = Icons.Default.Link, category = "Links", tab = "Insert", actionId = "hyperlink"),
+        RibbonTool(id = "bookmark", title = "Bookmark", description = "Bookmark", icon = Icons.Default.Bookmark, category = "Links", tab = "Insert", actionId = "bookmark"),
+        RibbonTool(id = "header_footer", title = "Header & Footer", description = "Header & Footer", icon = Icons.Default.ViewAgenda, category = "Header & Footer", tab = "Insert", actionId = "header_footer"),
+        RibbonTool(id = "text_box", title = "Text Box", description = "Text Box", icon = Icons.Default.TextFields, category = "Text", tab = "Insert", actionId = "text_box"),
 
         // --- LAYOUT TAB TOOLS ---
         // 1. Page Setup Group
-        RibbonTool(id = "margins", title = "Margins", description = "Set Page Margins", icon = Icons.Default.Settings, category = "Page Setup", tab = "Layout", actionId = "margins", hasDropdown = true),
-        RibbonTool(id = "orientation", title = "Orientation", description = "Page Orientation", icon = Icons.Default.Refresh, category = "Page Setup", tab = "Layout", actionId = "orientation", hasDropdown = true),
-        RibbonTool(id = "size", title = "Size", description = "Page Size", icon = Icons.Default.Settings, category = "Page Setup", tab = "Layout", actionId = "size", hasDropdown = true),
-        RibbonTool(id = "columns", title = "Columns", description = "Page Columns", icon = Icons.Default.Menu, category = "Page Setup", tab = "Layout", actionId = "columns", hasDropdown = true),
-        RibbonTool(id = "breaks", title = "Breaks", description = "Page Breaks", icon = Icons.Default.Menu, category = "Page Setup", tab = "Layout", actionId = "breaks", hasDropdown = true),
-        RibbonTool(id = "line_numbers", title = "Line Numbers", description = "Line Numbers", icon = Icons.Default.Menu, category = "Page Setup", tab = "Layout", actionId = "line_numbers", hasDropdown = true),
-        RibbonTool(id = "hyphenation", title = "Hyphenation", description = "Hyphenation", icon = Icons.Default.Menu, category = "Page Setup", tab = "Layout", actionId = "hyphenation", hasDropdown = true),
+        RibbonTool(id = "margins", title = "Margins", description = "Set Page Margins", icon = Icons.Default.SettingsOverscan, category = "Page Setup", tab = "Layout", actionId = "margins", hasDropdown = true),
+        RibbonTool(id = "orientation", title = "Orientation", description = "Page Orientation", icon = Icons.Default.ScreenRotation, category = "Page Setup", tab = "Layout", actionId = "orientation", hasDropdown = true),
+        RibbonTool(id = "size", title = "Size", description = "Page Size", icon = Icons.Default.AspectRatio, category = "Page Setup", tab = "Layout", actionId = "size", hasDropdown = true),
+        RibbonTool(id = "columns", title = "Columns", description = "Page Columns", icon = Icons.Default.ViewColumn, category = "Page Setup", tab = "Layout", actionId = "columns", hasDropdown = true),
+        RibbonTool(id = "breaks", title = "Breaks", description = "Page Breaks", icon = Icons.Default.KeyboardReturn, category = "Page Setup", tab = "Layout", actionId = "breaks", hasDropdown = true),
 
         // 2. Themes Group
-        RibbonTool(id = "theme_apply", title = "Themes", description = "Document Themes", icon = Icons.Default.Star, category = "Themes", tab = "Layout", actionId = "theme_apply", hasDropdown = true),
-        RibbonTool(id = "theme_colors", title = "Colors", description = "Theme Colors", icon = Icons.Default.AccountBox, category = "Themes", tab = "Layout", actionId = "theme_colors", hasDropdown = true),
-        RibbonTool(id = "theme_fonts", title = "Fonts", description = "Theme Fonts", icon = Icons.Default.Menu, category = "Themes", tab = "Layout", actionId = "theme_fonts", hasDropdown = true),
-        RibbonTool(id = "theme_effects", title = "Effects", description = "Theme Effects", icon = Icons.Default.Build, category = "Themes", tab = "Layout", actionId = "theme_effects", hasDropdown = true),
+        RibbonTool(id = "theme_apply", title = "Themes", description = "Document Themes", icon = Icons.Default.ColorLens, category = "Themes", tab = "Layout", actionId = "theme_apply", hasDropdown = true),
+        RibbonTool(id = "theme_colors", title = "Colors", description = "Theme Colors", icon = Icons.Default.Palette, category = "Themes", tab = "Layout", actionId = "theme_colors", hasDropdown = true),
+        RibbonTool(id = "theme_fonts", title = "Fonts", description = "Theme Fonts", icon = Icons.Default.FontDownload, category = "Themes", tab = "Layout", actionId = "theme_fonts", hasDropdown = true),
+        RibbonTool(id = "theme_effects", title = "Effects", description = "Theme Effects", icon = Icons.Default.AutoAwesome, category = "Themes", tab = "Layout", actionId = "theme_effects", hasDropdown = true),
 
         // 3. Page Background Group
-        RibbonTool(id = "watermark", title = "Watermark", description = "Page Watermark", icon = Icons.Default.Info, category = "Page Background", tab = "Layout", actionId = "watermark", hasDropdown = true),
-        RibbonTool(id = "page_color", title = "Page Color", description = "Page Background Color", icon = Icons.Default.Create, category = "Page Background", tab = "Layout", actionId = "page_color", hasDropdown = true),
-        RibbonTool(id = "page_borders", title = "Page Borders", description = "Page Borders", icon = Icons.Default.KeyboardArrowDown, category = "Page Background", tab = "Layout", actionId = "page_borders", hasDropdown = false),
+        RibbonTool(id = "watermark", title = "Watermark", description = "Page Watermark", icon = Icons.Default.BrandingWatermark, category = "Page Background", tab = "Layout", actionId = "watermark", hasDropdown = true),
+        RibbonTool(id = "page_color", title = "Page Color", description = "Page Background Color", icon = Icons.Default.FormatColorFill, category = "Page Background", tab = "Layout", actionId = "page_color", hasDropdown = true),
+        RibbonTool(id = "page_borders", title = "Page Borders", description = "Page Borders", icon = Icons.Default.BorderAll, category = "Page Background", tab = "Layout", actionId = "page_borders", hasDropdown = false),
 
-        // --- REFERENCES TAB TOOLS ---
-        RibbonTool(
-            id = "reference_toc",
-            title = "Table of Contents",
-            description = "Scan markdown and write responsive headings index",
-            icon = Icons.Default.Menu,
-            category = "Table of Contents Index",
-            tab = "References",
-            actionId = "reference_toc"
-        ),
-        RibbonTool(
-            id = "footnote",
-            title = "Footnote Anchor",
-            description = "Add trailing description index at bottom",
-            icon = Icons.Default.KeyboardArrowDown,
-            category = "Footnotes Configuration",
-            tab = "References",
-            actionId = "footnote"
-        ),
-        RibbonTool(
-            id = "endnote",
-            title = "Endnote Add",
-            description = "Place citation logs concluding",
-            icon = Icons.Default.Lock,
-            category = "Footnotes Configuration",
-            tab = "References",
-            actionId = "endnote"
-        ),
-        RibbonTool(
-            id = "citation",
-            title = "Insert Citation",
-            description = "Acknowledge author sources in text",
-            icon = Icons.Default.Person,
-            category = "Smart Academic Citation",
-            tab = "References",
-            actionId = "citation"
-        ),
+        // References Tab Tools removed
 
         // --- REVIEW TAB TOOLS ---
-        // 1. Proofing Group
-        RibbonTool(id = "spelling_grammar", title = "Spelling & Grammar", description = "Spelling & Grammar", icon = Icons.Default.Check, category = "Proofing", tab = "Review", actionId = "spelling_grammar", hasDropdown = false),
-        RibbonTool(id = "thesaurus", title = "Thesaurus", description = "Thesaurus", icon = Icons.Default.Menu, category = "Proofing", tab = "Review", actionId = "thesaurus", hasDropdown = false),
-        RibbonTool(id = "word_count", title = "Word Count", description = "Word Count", icon = Icons.Default.Info, category = "Proofing", tab = "Review", actionId = "word_count", hasDropdown = false),
-
-        // 2. Speech Group
-        RibbonTool(id = "read_aloud", title = "Read Aloud", description = "Read Aloud", icon = Icons.Default.PlayArrow, category = "Speech", tab = "Review", actionId = "read_aloud", hasDropdown = false),
-
-        // 3. Accessibility Group
-        RibbonTool(id = "check_accessibility", title = "Check Accessibility", description = "Check Accessibility", icon = Icons.Default.Info, category = "Accessibility", tab = "Review", actionId = "check_accessibility", hasDropdown = false),
-
-        // 4. Language Group
-        RibbonTool(id = "translate", title = "Translate", description = "Translate", icon = Icons.Default.MoreVert, category = "Language", tab = "Review", actionId = "translate", hasDropdown = true),
-        RibbonTool(id = "language", title = "Language", description = "Language", icon = Icons.Default.AccountBox, category = "Language", tab = "Review", actionId = "language", hasDropdown = true),
-
-        // 5. Comments Group
-        RibbonTool(id = "new_comment", title = "New Comment", description = "New Comment", icon = Icons.Default.Add, category = "Comments", tab = "Review", actionId = "new_comment", hasDropdown = false),
-        RibbonTool(id = "delete_comment", title = "Delete", description = "Delete", icon = Icons.Default.Delete, category = "Comments", tab = "Review", actionId = "delete_comment", hasDropdown = true),
-        RibbonTool(id = "prev_comment", title = "Previous", description = "Previous", icon = Icons.Default.ArrowBack, category = "Comments", tab = "Review", actionId = "prev_comment", hasDropdown = false),
-        RibbonTool(id = "next_comment", title = "Next", description = "Next", icon = Icons.Default.ArrowForward, category = "Comments", tab = "Review", actionId = "next_comment", hasDropdown = false),
-        RibbonTool(id = "show_comments", title = "Show Comments", description = "Show Comments", icon = Icons.Default.List, category = "Comments", tab = "Review", actionId = "show_comments", hasDropdown = false),
-
-        // 6. Tracking Group
-        RibbonTool(id = "track_changes", title = "Track Changes", description = "Track Changes", icon = Icons.Default.Edit, category = "Tracking", tab = "Review", actionId = "track_changes", hasDropdown = true),
+        RibbonTool(id = "spelling_grammar", title = "Spelling", description = "Spelling", icon = Icons.Default.Spellcheck, category = "Proofing", tab = "Review", actionId = "spelling_grammar", hasDropdown = false),
+        RibbonTool(id = "thesaurus", title = "Thesaurus", description = "Thesaurus", icon = Icons.Default.MenuBook, category = "Proofing", tab = "Review", actionId = "thesaurus", hasDropdown = false),
+        RibbonTool(id = "word_count", title = "Word Count", description = "Word Count", icon = Icons.Default.Numbers, category = "Proofing", tab = "Review", actionId = "word_count", hasDropdown = false),
+        RibbonTool(id = "read_aloud", title = "Read Aloud", description = "Read Aloud", icon = Icons.Default.VolumeUp, category = "Speech", tab = "Review", actionId = "read_aloud", hasDropdown = false),
+        RibbonTool(id = "check_accessibility", title = "Accessibility", description = "Accessibility", icon = Icons.Default.Accessibility, category = "Accessibility", tab = "Review", actionId = "check_accessibility", hasDropdown = false),
+        RibbonTool(id = "translate", title = "Translate", description = "Translate", icon = Icons.Default.Translate, category = "Language", tab = "Review", actionId = "translate", hasDropdown = true),
+        RibbonTool(id = "language", title = "Language", description = "Language", icon = Icons.Default.Language, category = "Language", tab = "Review", actionId = "language", hasDropdown = true),
+        RibbonTool(id = "new_comment", title = "New Comment", description = "New Comment", icon = Icons.Default.AddComment, category = "Comments", tab = "Review", actionId = "new_comment", hasDropdown = false),
+        RibbonTool(id = "delete_comment", title = "Delete", description = "Delete", icon = Icons.Default.DeleteOutline, category = "Comments", tab = "Review", actionId = "delete_comment", hasDropdown = false),
+        RibbonTool(id = "show_comments", title = "Show Comments", description = "Show Comments", icon = Icons.Default.Chat, category = "Comments", tab = "Review", actionId = "show_comments", hasDropdown = false),
+        RibbonTool(id = "track_changes", title = "Track Changes", description = "Track Changes", icon = Icons.Default.EditNote, category = "Tracking", tab = "Review", actionId = "track_changes", hasDropdown = true),
 
         // --- AI ASSISTANT TAB TOOLS ---
         RibbonTool(
             id = "ai_summarize",
             title = "Summarize Text",
-            description = "Produce smart bullet insights card",
-            icon = Icons.Default.Star,
+            description = "Summarize Text",
+            icon = Icons.Default.AutoAwesome,
             category = "AI Co Pilot Engine",
             tab = "AI Assistant",
             actionId = "ai_summarize"
@@ -853,26 +720,26 @@ fun getRibbonTools(
         RibbonTool(
             id = "ai_improve",
             title = "Improve Tone",
-            description = "Polish text wording beautifully",
-            icon = Icons.Default.Star,
+            description = "Improve Tone",
+            icon = Icons.Default.AutoFixHigh,
             category = "AI Co Pilot Engine",
             tab = "AI Assistant",
             actionId = "ai_improve"
         ),
         RibbonTool(
             id = "ai_grammar",
-            title = "Fix Grammar Errors",
-            description = "Resolve complex syntactic hiccups",
-            icon = Icons.Default.ThumbUp,
+            title = "Fix Grammar",
+            description = "Fix Grammar Error",
+            icon = Icons.Default.Spellcheck,
             category = "AI Co Pilot Engine",
             tab = "AI Assistant",
             actionId = "ai_grammar"
         ),
         RibbonTool(
             id = "ai_topics",
-            title = "Add Topic Suggs",
-            description = "Brainstorm research vectors automatically",
-            icon = Icons.Default.Info,
+            title = "Suggest Topics",
+            description = "Suggest Topics",
+            icon = Icons.Default.Lightbulb,
             category = "Creative Writing Vectors",
             tab = "AI Assistant",
             actionId = "ai_topics"
@@ -2827,11 +2694,11 @@ fun WorkspacePane(
                                                             val cols = if (totalWidth < 600.dp) 3 else if (totalWidth < 900.dp) 4 else 6
                                                             val chunks = toolsInCategory.chunked(cols)
 
-                                                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                                                 chunks.forEach { rowTools ->
                                                                     Row(
                                                                         modifier = Modifier.fillMaxWidth(),
-                                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                                                                     ) {
                                                                         rowTools.forEach { tool ->
                                                                             Box(
@@ -2880,10 +2747,9 @@ fun WorkspacePane(
                         val ribbonTabs = listOf(
                             Triple("Home", Icons.Default.Home, "ribbon_tab_Home"),
                             Triple("Insert", Icons.Default.Add, "ribbon_tab_Insert"),
+                            Triple("AI Assistant", Icons.Default.Star, "ribbon_tab_AIAssistant"),
                             Triple("Layout", Icons.Default.Settings, "ribbon_tab_Layout"),
-                            Triple("References", Icons.Default.Menu, "ribbon_tab_References"),
-                            Triple("Review", Icons.Default.Check, "ribbon_tab_Review"),
-                            Triple("AI Assistant", Icons.Default.Star, "ribbon_tab_AIAssistant")
+                            Triple("Review", Icons.Default.Check, "ribbon_tab_Review")
                         )
 
                         ribbonTabs.forEach { (tabName, icon, tag) ->
