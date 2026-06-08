@@ -19,6 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -1228,36 +1231,31 @@ fun RibbonGroupContainer(
             color = if (isSystemInDarkTheme()) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
         )
     ) {
-        Column(modifier = Modifier.animateContentSize()) {
+        Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onToggleExpand() }
                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                val displayTitle = if (title.equals("Font Formatting", ignoreCase = true) || title.equals("Font", ignoreCase = true)) {
+                    "T FONT"
+                } else {
+                    title.uppercase()
+                }
                 Text(
-                    text = title.uppercase(),
+                    text = displayTitle,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = accentColor,
                     letterSpacing = 0.8.sp
                 )
-                Icon(
-                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (isExpanded) "Collapse $title" else "Expand $title",
-                    tint = if (isSystemInDarkTheme()) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.5f),
-                    modifier = Modifier.size(20.dp)
-                )
             }
-            if (isExpanded) {
-                HorizontalDivider(
-                    color = if (isSystemInDarkTheme()) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
-                )
-                Box(modifier = Modifier.padding(16.dp)) {
-                    content()
-                }
+            HorizontalDivider(
+                color = if (isSystemInDarkTheme()) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.05f)
+            )
+            Box(modifier = Modifier.padding(16.dp)) {
+                content()
             }
         }
     }
@@ -1265,20 +1263,25 @@ fun RibbonGroupContainer(
 
 @Composable
 fun RibbonIconButton(
-    icon: ImageVector,
+    icon: ImageVector? = null,
+    textLabel: String? = null,
     contentDescription: String,
     onClick: () -> Unit,
     isSelected: Boolean = false,
     colorSchemeColor: Color = OnlyOfficePrimary,
-    modifier: Modifier = Modifier
+    transparentBg: Boolean = false,
+    modifier: Modifier = Modifier,
+    customContent: @Composable (() -> Unit)? = null
 ) {
     val isDarkTheme = isSystemInDarkTheme()
     val bgColor = when {
+        transparentBg -> Color.Transparent
         isSelected -> colorSchemeColor.copy(alpha = 0.18f)
         isDarkTheme -> Color(0xFF323236)
         else -> Color(0xFFF1F3F6)
     }
     val contentColor = when {
+        transparentBg -> colorSchemeColor
         isSelected -> colorSchemeColor
         isDarkTheme -> Color.White
         else -> Color.DarkGray
@@ -1293,12 +1296,24 @@ fun RibbonIconButton(
             .padding(4.dp),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            tint = contentColor,
-            modifier = Modifier.size(18.dp)
-        )
+        if (customContent != null) {
+            customContent()
+        } else if (textLabel != null) {
+            Text(
+                text = textLabel,
+                color = contentColor,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+        } else if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = contentColor,
+                modifier = Modifier.size(18.dp)
+            )
+        }
     }
 }
 
@@ -1398,7 +1413,7 @@ fun WorkspacePane(
         var pageMargins by remember { mutableStateOf(24.dp) }
         var columnCount by remember { mutableStateOf(1) }
         var textAlignment by remember { mutableStateOf(TextAlign.Left) }
-        var fontSize by remember { mutableStateOf(14.sp) }
+        var fontSize by remember { mutableStateOf(16.sp) }
         var isLandscape by remember { mutableStateOf(false) }
 
         var activeRibbonTab by remember { mutableStateOf("Home") }
@@ -1407,16 +1422,16 @@ fun WorkspacePane(
         var ribbonSearchQuery by remember { mutableStateOf("") }
 
         var isFontExpanded by remember { mutableStateOf(true) }
-        var isClipboardExpanded by remember { mutableStateOf(false) }
-        var isParagraphExpanded by remember { mutableStateOf(false) }
-        var isStylesExpanded by remember { mutableStateOf(false) }
-        var isEditingExpanded by remember { mutableStateOf(false) }
-        var isAiExpanded by remember { mutableStateOf(false) }
-        var isReviewExpanded by remember { mutableStateOf(false) }
-        var isStatsExpanded by remember { mutableStateOf(false) }
+        var isClipboardExpanded by remember { mutableStateOf(true) }
+        var isParagraphExpanded by remember { mutableStateOf(true) }
+        var isStylesExpanded by remember { mutableStateOf(true) }
+        var isEditingExpanded by remember { mutableStateOf(true) }
+        var isAiExpanded by remember { mutableStateOf(true) }
+        var isReviewExpanded by remember { mutableStateOf(true) }
+        var isStatsExpanded by remember { mutableStateOf(true) }
 
-        var activeFontFamily by remember { mutableStateOf("Aptos (Default)") }
-        var activeFontSize by remember { mutableStateOf("14") }
+        var activeFontFamily by remember { mutableStateOf("Default") }
+        var activeFontSize by remember { mutableStateOf("16") }
 
         val coroutineScope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
@@ -1714,6 +1729,240 @@ fun WorkspacePane(
                                         ) {
                                             // --- FONT GROUP ---
                                             item {
+                                                val groupColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor
+                                                RibbonGroupContainer(
+                                                    title = "Font Formatting",
+                                                    isExpanded = isFontExpanded,
+                                                    onToggleExpand = { isFontExpanded = !isFontExpanded },
+                                                    accentColor = groupColor
+                                                ) {
+                                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                                        // Row 1: Dropdowns and scale buttons
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            RibbonDropdown(
+                                                                selectedValue = activeFontFamily,
+                                                                options = listOf("Default", "Aptos", "Calibri", "Arial", "Times New Roman", "Courier New", "Georgia", "Space Grotesk", "JetBrains Mono"),
+                                                                onSelect = {
+                                                                    activeFontFamily = it
+                                                                    onAction("clear_format")
+                                                                    coroutineScope.launch {
+                                                                        snackbarHostState.showSnackbar("Font family changed to: $it")
+                                                                    }
+                                                                },
+                                                                modifier = Modifier.weight(3.5f)
+                                                            )
+
+                                                            RibbonDropdown(
+                                                                selectedValue = activeFontSize,
+                                                                options = listOf("9", "10", "11", "12", "14", "16", "18", "20", "24", "28", "32", "48"),
+                                                                onSelect = {
+                                                                    activeFontSize = it
+                                                                    onAction("clear_format")
+                                                                    val num = it.toIntOrNull() ?: 16
+                                                                    fontSize = num.sp
+                                                                    coroutineScope.launch {
+                                                                        snackbarHostState.showSnackbar("Font size set to: ${num}sp")
+                                                                    }
+                                                                },
+                                                                modifier = Modifier.weight(2.2f)
+                                                            )
+
+                                                            RibbonIconButton(
+                                                                contentDescription = "Increase Font Size",
+                                                                onClick = {
+                                                                    onAction("font_incr")
+                                                                    val currentSize = fontSize.value.toInt()
+                                                                    val newSize = if (currentSize < 48) currentSize + 2 else 48
+                                                                    fontSize = newSize.sp
+                                                                    activeFontSize = newSize.toString()
+                                                                },
+                                                                colorSchemeColor = groupColor,
+                                                                transparentBg = true,
+                                                                modifier = Modifier.weight(1.1f),
+                                                                customContent = {
+                                                                    Text("↑", color = groupColor, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                                                                }
+                                                            )
+
+                                                            RibbonIconButton(
+                                                                contentDescription = "Decrease Font Size",
+                                                                onClick = {
+                                                                    onAction("font_decr")
+                                                                    val currentSize = fontSize.value.toInt()
+                                                                    val newSize = if (currentSize > 8) currentSize - 2 else 8
+                                                                    fontSize = newSize.sp
+                                                                    activeFontSize = newSize.toString()
+                                                                },
+                                                                colorSchemeColor = groupColor,
+                                                                transparentBg = true,
+                                                                modifier = Modifier.weight(1.1f),
+                                                                customContent = {
+                                                                    Text("↓", color = groupColor, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                                                                }
+                                                            )
+
+                                                            RibbonIconButton(
+                                                                contentDescription = "Change Case",
+                                                                onClick = {
+                                                                    val currentContent = draftContent
+                                                                    val updatedContent = if (currentContent == currentContent.uppercase()) {
+                                                                        currentContent.lowercase()
+                                                                    } else if (currentContent == currentContent.lowercase()) {
+                                                                        currentContent.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                                                    } else {
+                                                                        currentContent.uppercase()
+                                                                    }
+                                                                    onContentChange(updatedContent)
+                                                                    coroutineScope.launch {
+                                                                        snackbarHostState.showSnackbar("Changed text case formatting")
+                                                                    }
+                                                                },
+                                                                colorSchemeColor = groupColor,
+                                                                transparentBg = true,
+                                                                modifier = Modifier.weight(1.3f),
+                                                                customContent = {
+                                                                    Text("Aa", color = groupColor, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                                                }
+                                                            )
+
+                                                            RibbonIconButton(
+                                                                contentDescription = "Clear Formatting",
+                                                                onClick = {
+                                                                    onAction("clear_format")
+                                                                },
+                                                                colorSchemeColor = groupColor,
+                                                                transparentBg = true,
+                                                                modifier = Modifier.weight(1.1f),
+                                                                customContent = {
+                                                                    Text("×", color = groupColor, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                                                                }
+                                                            )
+                                                        }
+
+                                                        // Row 2: Text Styling
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            RibbonIconButton(
+                                                                contentDescription = "Bold",
+                                                                onClick = { onAction("bold") },
+                                                                colorSchemeColor = groupColor,
+                                                                modifier = Modifier.weight(1f),
+                                                                customContent = {
+                                                                    Text("B", fontWeight = FontWeight.Black, fontSize = 18.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black, fontFamily = FontFamily.SansSerif)
+                                                                }
+                                                            )
+                                                            RibbonIconButton(
+                                                                contentDescription = "Italic",
+                                                                onClick = { onAction("italic") },
+                                                                colorSchemeColor = groupColor,
+                                                                modifier = Modifier.weight(1f),
+                                                                customContent = {
+                                                                    Text("I", fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black, fontFamily = FontFamily.Serif)
+                                                                }
+                                                            )
+                                                            RibbonIconButton(
+                                                                contentDescription = "Underline",
+                                                                onClick = { onAction("underline") },
+                                                                colorSchemeColor = groupColor,
+                                                                modifier = Modifier.weight(1f),
+                                                                customContent = {
+                                                                    Text("U", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black, textDecoration = TextDecoration.Underline, fontFamily = FontFamily.SansSerif)
+                                                                }
+                                                            )
+                                                            RibbonIconButton(
+                                                                contentDescription = "Strikethrough",
+                                                                onClick = {
+                                                                    onContentChange(draftContent + " ~~Strikethrough~~")
+                                                                    coroutineScope.launch {
+                                                                        snackbarHostState.showSnackbar("Strikethrough formatting applied")
+                                                                    }
+                                                                },
+                                                                colorSchemeColor = groupColor,
+                                                                modifier = Modifier.weight(1f),
+                                                                customContent = {
+                                                                    Text("abc", fontWeight = FontWeight.Medium, fontSize = 14.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black, textDecoration = TextDecoration.LineThrough, fontFamily = FontFamily.SansSerif)
+                                                                }
+                                                            )
+                                                            RibbonIconButton(
+                                                                contentDescription = "Subscript",
+                                                                onClick = {
+                                                                    onContentChange(draftContent + " <sub>sub</sub>")
+                                                                    coroutineScope.launch {
+                                                                        snackbarHostState.showSnackbar("Subscript formatting applied")
+                                                                    }
+                                                                },
+                                                                colorSchemeColor = groupColor,
+                                                                modifier = Modifier.weight(1f),
+                                                                customContent = {
+                                                                    Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(bottom = 2.dp)) {
+                                                                        Text("x", fontSize = 14.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black, fontWeight = FontWeight.Bold)
+                                                                        Text("2", fontSize = 9.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black, fontWeight = FontWeight.Bold, modifier = Modifier.offset(y = 2.dp))
+                                                                    }
+                                                                }
+                                                            )
+                                                            RibbonIconButton(
+                                                                contentDescription = "Superscript",
+                                                                onClick = {
+                                                                    onContentChange(draftContent + " <sup>super</sup>")
+                                                                    coroutineScope.launch {
+                                                                        snackbarHostState.showSnackbar("Superscript formatting applied")
+                                                                    }
+                                                                },
+                                                                colorSchemeColor = groupColor,
+                                                                modifier = Modifier.weight(1f),
+                                                                customContent = {
+                                                                    Row(verticalAlignment = Alignment.Top, modifier = Modifier.padding(top = 2.dp)) {
+                                                                        Text("x", fontSize = 14.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black, fontWeight = FontWeight.Bold)
+                                                                        Text("2", fontSize = 9.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black, fontWeight = FontWeight.Bold, modifier = Modifier.offset(y = -2.dp))
+                                                                    }
+                                                                }
+                                                            )
+                                                            RibbonIconButton(
+                                                                contentDescription = "Font Color",
+                                                                onClick = {
+                                                                    coroutineScope.launch {
+                                                                        snackbarHostState.showSnackbar("Font color changed to primary accent!")
+                                                                    }
+                                                                },
+                                                                colorSchemeColor = groupColor,
+                                                                modifier = Modifier.weight(1f),
+                                                                customContent = {
+                                                                    Text("A", fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color(0xFF3B82F6))
+                                                                }
+                                                            )
+                                                            RibbonIconButton(
+                                                                contentDescription = "Highlight",
+                                                                onClick = {
+                                                                    coroutineScope.launch {
+                                                                        snackbarHostState.showSnackbar("Text highlight applied!")
+                                                                    }
+                                                                },
+                                                                colorSchemeColor = groupColor,
+                                                                modifier = Modifier.weight(1f),
+                                                                customContent = {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.Edit,
+                                                                        contentDescription = "Highlight",
+                                                                        tint = if (isSystemInDarkTheme()) Color(0xFF94A3B8) else Color(0xFF64748B),
+                                                                        modifier = Modifier.size(18.dp).rotate(-45f)
+                                                                    )
+                                                                }
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            /*
+                                            // --- FONT GROUP ---
+                                            item {
                                                 RibbonGroupContainer(
                                                     title = "Font Formatting",
                                                     isExpanded = isFontExpanded,
@@ -1729,7 +1978,7 @@ fun WorkspacePane(
                                                         ) {
                                                             RibbonDropdown(
                                                                 selectedValue = activeFontFamily,
-                                                                options = listOf("Aptos", "Calibri", "Arial", "Times New Roman", "Courier New", "Georgia", "Space Grotesk", "JetBrains Mono"),
+                                                                options = listOf("Default", "Aptos", "Calibri", "Arial", "Times New Roman", "Courier New", "Georgia", "Space Grotesk", "JetBrains Mono"),
                                                                 onSelect = {
                                                                     activeFontFamily = it
                                                                     onAction("clear_format")
@@ -1904,6 +2153,8 @@ fun WorkspacePane(
                                                     }
                                                 }
                                             }
+
+                                            */
 
                                             // --- CLIPBOARD GROUP ---
                                             item {
