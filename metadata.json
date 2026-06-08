@@ -1,0 +1,6 @@
+{
+  "name": "JCdocs",
+  "description": "Premium real-time reactive offline office suite modeled after ONLYOFFICE, supporting documents, spreadsheets with formulas, and interactive slideshows.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
