@@ -815,42 +815,30 @@ fun getRibbonTools(
         ),
 
         // --- REVIEW TAB TOOLS ---
-        RibbonTool(
-            id = "review_stats",
-            title = "Document Stats",
-            description = "View word frequency, count & grade stats",
-            icon = Icons.Default.Info,
-            category = "Document Stats Counter",
-            tab = "Review",
-            actionId = "review_stats"
-        ),
-        RibbonTool(
-            id = "spell_check",
-            title = "Spell Check",
-            description = "Auto-fix spelling typos ('teh', 'recieve')",
-            icon = Icons.Default.Check,
-            category = "Document Grammar Review",
-            tab = "Review",
-            actionId = "spell_check"
-        ),
-        RibbonTool(
-            id = "read_aloud",
-            title = "Read Aloud (TTS)",
-            description = "Hear native narration simulation",
-            icon = Icons.Default.PlayArrow,
-            category = "Accessibility Read Tool",
-            tab = "Review",
-            actionId = "read_aloud"
-        ),
-        RibbonTool(
-            id = "translate_preview",
-            title = "Translate Spanish",
-            description = "Generate Spanish copy of text data",
-            icon = Icons.Default.Share,
-            category = "Cross Language Translate",
-            tab = "Review",
-            actionId = "translate_preview"
-        ),
+        // 1. Proofing Group
+        RibbonTool(id = "spelling_grammar", title = "Spelling & Grammar", description = "Spelling & Grammar", icon = Icons.Default.Check, category = "Proofing", tab = "Review", actionId = "spelling_grammar", hasDropdown = false),
+        RibbonTool(id = "thesaurus", title = "Thesaurus", description = "Thesaurus", icon = Icons.Default.Menu, category = "Proofing", tab = "Review", actionId = "thesaurus", hasDropdown = false),
+        RibbonTool(id = "word_count", title = "Word Count", description = "Word Count", icon = Icons.Default.Info, category = "Proofing", tab = "Review", actionId = "word_count", hasDropdown = false),
+
+        // 2. Speech Group
+        RibbonTool(id = "read_aloud", title = "Read Aloud", description = "Read Aloud", icon = Icons.Default.PlayArrow, category = "Speech", tab = "Review", actionId = "read_aloud", hasDropdown = false),
+
+        // 3. Accessibility Group
+        RibbonTool(id = "check_accessibility", title = "Check Accessibility", description = "Check Accessibility", icon = Icons.Default.Info, category = "Accessibility", tab = "Review", actionId = "check_accessibility", hasDropdown = false),
+
+        // 4. Language Group
+        RibbonTool(id = "translate", title = "Translate", description = "Translate", icon = Icons.Default.MoreVert, category = "Language", tab = "Review", actionId = "translate", hasDropdown = true),
+        RibbonTool(id = "language", title = "Language", description = "Language", icon = Icons.Default.AccountBox, category = "Language", tab = "Review", actionId = "language", hasDropdown = true),
+
+        // 5. Comments Group
+        RibbonTool(id = "new_comment", title = "New Comment", description = "New Comment", icon = Icons.Default.Add, category = "Comments", tab = "Review", actionId = "new_comment", hasDropdown = false),
+        RibbonTool(id = "delete_comment", title = "Delete", description = "Delete", icon = Icons.Default.Delete, category = "Comments", tab = "Review", actionId = "delete_comment", hasDropdown = true),
+        RibbonTool(id = "prev_comment", title = "Previous", description = "Previous", icon = Icons.Default.ArrowBack, category = "Comments", tab = "Review", actionId = "prev_comment", hasDropdown = false),
+        RibbonTool(id = "next_comment", title = "Next", description = "Next", icon = Icons.Default.ArrowForward, category = "Comments", tab = "Review", actionId = "next_comment", hasDropdown = false),
+        RibbonTool(id = "show_comments", title = "Show Comments", description = "Show Comments", icon = Icons.Default.List, category = "Comments", tab = "Review", actionId = "show_comments", hasDropdown = false),
+
+        // 6. Tracking Group
+        RibbonTool(id = "track_changes", title = "Track Changes", description = "Track Changes", icon = Icons.Default.Edit, category = "Tracking", tab = "Review", actionId = "track_changes", hasDropdown = true),
 
         // --- AI ASSISTANT TAB TOOLS ---
         RibbonTool(
