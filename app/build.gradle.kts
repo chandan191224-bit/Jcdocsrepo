@@ -6,6 +6,22 @@ plugins {
   alias(libs.plugins.secrets)
 }
 
+tasks.register("fixIcons") {
+    doLast {
+        val files = listOf(
+            file("src/main/java/com/example/ui/DocEditorScreen.kt"),
+            file("src/main/java/com/example/ui/AIChatPanel.kt")
+        )
+        files.forEach { file ->
+            if (file.exists()) {
+                val content = file.readText()
+                val newContent = content.replace("Icons.Default.", "Icons.Outlined.")
+                file.writeText(newContent)
+            }
+        }
+    }
+}
+
 android {
   namespace = "com.example"
   compileSdk { version = release(36) { minorApiLevel = 1 } }

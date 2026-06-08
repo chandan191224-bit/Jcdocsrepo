@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -60,7 +61,7 @@ fun AIChatPanel(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.Star,
+                        imageVector = Icons.Outlined.Star,
                         contentDescription = "AI Assistant",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
@@ -76,16 +77,16 @@ fun AIChatPanel(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { messages = emptyList() }, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "New Chat", modifier = Modifier.size(18.dp))
+                        Icon(imageVector = Icons.Outlined.Add, contentDescription = "New Chat", modifier = Modifier.size(18.dp))
                     }
                     IconButton(onClick = { /* History */ }, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Default.Info, contentDescription = "History", modifier = Modifier.size(18.dp)) // Using Info since History might not exist
+                        Icon(imageVector = Icons.Outlined.Info, contentDescription = "History", modifier = Modifier.size(18.dp)) // Using Info since History might not exist
                     }
                     IconButton(onClick = { /* Settings */ }, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Default.Settings, contentDescription = "Settings", modifier = Modifier.size(18.dp))
+                        Icon(imageVector = Icons.Outlined.Settings, contentDescription = "Settings", modifier = Modifier.size(18.dp))
                     }
                     IconButton(onClick = onClose, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(18.dp))
+                        Icon(imageVector = Icons.Outlined.Close, contentDescription = "Close", modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -104,7 +105,7 @@ fun AIChatPanel(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Star,
+                            imageVector = Icons.Outlined.Star,
                             contentDescription = null,
                             tint = Color.Gray.copy(alpha = 0.5f),
                             modifier = Modifier.size(48.dp)
@@ -165,7 +166,7 @@ fun AIChatPanel(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { /* Attach */ }, modifier = Modifier.size(32.dp)) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Attach", tint = Color.Gray, modifier = Modifier.size(20.dp))
+                    Icon(imageVector = Icons.Outlined.Add, contentDescription = "Attach", tint = Color.Gray, modifier = Modifier.size(20.dp))
                 }
                 Box(
                     modifier = Modifier.weight(1f),
@@ -199,7 +200,7 @@ fun AIChatPanel(
                             .size(36.dp)
                             .background(MaterialTheme.colorScheme.primary, CircleShape)
                     ) {
-                        Icon(imageVector = Icons.Default.Send, contentDescription = "Send", tint = Color.White, modifier = Modifier.size(16.dp))
+                        Icon(imageVector = Icons.Outlined.Send, contentDescription = "Send", tint = Color.White, modifier = Modifier.size(16.dp))
                     }
                 }
             }
@@ -219,7 +220,7 @@ fun ChatBubble(message: ChatMessage, isDarkTheme: Boolean) {
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Star, contentDescription = "AI", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                Icon(Icons.Outlined.Star, contentDescription = "AI", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
             }
             Spacer(modifier = Modifier.width(8.dp))
         }
@@ -264,7 +265,7 @@ fun ChatBubble(message: ChatMessage, isDarkTheme: Boolean) {
                     .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Person, contentDescription = "User", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(16.dp))
+                Icon(Icons.Outlined.Person, contentDescription = "User", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(16.dp))
             }
         }
     }

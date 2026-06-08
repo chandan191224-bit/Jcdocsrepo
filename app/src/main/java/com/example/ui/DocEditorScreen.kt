@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -187,7 +188,7 @@ fun SidebarExplorer(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Done,
+                    imageVector = Icons.Outlined.Done,
                     contentDescription = "JCdocs Logo Symbol",
                     tint = Color.White,
                     modifier = Modifier.size(24.dp)
@@ -218,7 +219,7 @@ fun SidebarExplorer(
             placeholder = { Text("Search office sheets & files...", fontSize = 14.sp) },
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Search,
+                    imageVector = Icons.Outlined.Search,
                     contentDescription = "Search Files"
                 )
             },
@@ -246,7 +247,7 @@ fun SidebarExplorer(
                 .padding(horizontal = 16.dp)
                 .testTag("create_document_button")
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Add New")
+            Icon(Icons.Outlined.Add, contentDescription = "Add New")
             Spacer(modifier = Modifier.width(8.dp))
             Text("Create Office File", fontWeight = FontWeight.SemiBold)
         }
@@ -261,10 +262,10 @@ fun SidebarExplorer(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             val filters = listOf(
-                FilterItem("all", "All", Icons.Default.List),
-                FilterItem("word", "Writer", Icons.Default.Edit),
-                FilterItem("sheet", "Sheets", Icons.Default.PlayArrow),
-                FilterItem("slide", "Slides", Icons.Default.Share)
+                FilterItem("all", "All", Icons.Outlined.List),
+                FilterItem("word", "Writer", Icons.Outlined.Edit),
+                FilterItem("sheet", "Sheets", Icons.Outlined.PlayArrow),
+                FilterItem("slide", "Slides", Icons.Outlined.Share)
             )
             items(filters) { category ->
                 val isSelected = selectedFilter == category.id
@@ -313,7 +314,7 @@ fun SidebarExplorer(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Default.Info,
+                        imageVector = Icons.Outlined.Info,
                         contentDescription = "Empty State",
                         tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.25f),
                         modifier = Modifier.size(48.dp)
@@ -446,7 +447,7 @@ fun DocumentTile(
                     modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
-                        imageVector = if (doc.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        imageVector = if (doc.isFavorite) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = "Toggle Favorite",
                         tint = if (doc.isFavorite) Color.Red else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
                         modifier = Modifier.size(18.dp)
@@ -457,7 +458,7 @@ fun DocumentTile(
                     modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Delete,
+                        imageVector = Icons.Outlined.Delete,
                         contentDescription = "Delete Doc",
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
                         modifier = Modifier.size(18.dp)
@@ -524,7 +525,7 @@ fun RibbonToolCard(
         }
         if (tool.hasDropdown) {
             Icon(
-                imageVector = Icons.Default.ArrowDropDown,
+                imageVector = Icons.Outlined.ArrowDropDown,
                 contentDescription = null,
                 tint = if (isDarkTheme) Color.LightGray else Color.DarkGray,
                 modifier = Modifier.size(12.dp).align(Alignment.CenterEnd).padding(end = 4.dp)
@@ -555,7 +556,7 @@ fun getRibbonTools(
             id = "bold",
             title = "Bold",
             description = "Apply bold style layout",
-            icon = Icons.Default.FormatBold,
+            icon = Icons.Outlined.FormatBold,
             category = "Font Formatting",
             tab = "Home",
             actionId = "bold"
@@ -564,7 +565,7 @@ fun getRibbonTools(
             id = "italic",
             title = "Italic",
             description = "Apply italic text",
-            icon = Icons.Default.FormatItalic,
+            icon = Icons.Outlined.FormatItalic,
             category = "Font Formatting",
             tab = "Home",
             actionId = "italic"
@@ -573,7 +574,7 @@ fun getRibbonTools(
             id = "underline",
             title = "Underline",
             description = "Apply text underlining",
-            icon = Icons.Default.FormatUnderlined,
+            icon = Icons.Outlined.FormatUnderlined,
             category = "Font Formatting",
             tab = "Home",
             actionId = "underline"
@@ -582,7 +583,7 @@ fun getRibbonTools(
             id = "align_left",
             title = "Align Left",
             description = "Position text on the left",
-            icon = Icons.Default.FormatAlignLeft,
+            icon = Icons.Outlined.FormatAlignLeft,
             category = "Paragraph Alignment",
             tab = "Home",
             actionId = "align_left"
@@ -591,7 +592,7 @@ fun getRibbonTools(
             id = "align_center",
             title = "Center",
             description = "Center document paragraph",
-            icon = Icons.Default.FormatAlignCenter,
+            icon = Icons.Outlined.FormatAlignCenter,
             category = "Paragraph Alignment",
             tab = "Home",
             actionId = "align_center"
@@ -600,7 +601,7 @@ fun getRibbonTools(
             id = "align_right",
             title = "Align Right",
             description = "Position text on the right",
-            icon = Icons.Default.FormatAlignRight,
+            icon = Icons.Outlined.FormatAlignRight,
             category = "Paragraph Alignment",
             tab = "Home",
             actionId = "align_right"
@@ -609,7 +610,7 @@ fun getRibbonTools(
             id = "theme_white",
             title = "White Mode",
             description = "Select white paper backdrop",
-            icon = Icons.Default.LightMode,
+            icon = Icons.Outlined.LightMode,
             category = "Page Theme Layout",
             tab = "Home",
             actionId = "theme_white"
@@ -618,7 +619,7 @@ fun getRibbonTools(
             id = "theme_ivory",
             title = "Ivory Mode",
             description = "Select warm notepad tone",
-            icon = Icons.Default.WbSunny,
+            icon = Icons.Outlined.WbSunny,
             category = "Page Theme Layout",
             tab = "Home",
             actionId = "theme_ivory"
@@ -627,7 +628,7 @@ fun getRibbonTools(
             id = "theme_dark",
             title = "Dark Mode",
             description = "Select low-light layout canvas",
-            icon = Icons.Default.DarkMode,
+            icon = Icons.Outlined.DarkMode,
             category = "Page Theme Layout",
             tab = "Home",
             actionId = "theme_dark"
@@ -636,7 +637,7 @@ fun getRibbonTools(
             id = "font_incr",
             title = "Increase Font",
             description = "Increase font text size",
-            icon = Icons.Default.TextIncrease,
+            icon = Icons.Outlined.TextIncrease,
             category = "Text Size Scale",
             tab = "Home",
             actionId = "font_incr"
@@ -645,7 +646,7 @@ fun getRibbonTools(
             id = "font_decr",
             title = "Decrease Font",
             description = "Decrease font text size",
-            icon = Icons.Default.TextDecrease,
+            icon = Icons.Outlined.TextDecrease,
             category = "Text Size Scale",
             tab = "Home",
             actionId = "font_decr"
@@ -654,65 +655,65 @@ fun getRibbonTools(
             id = "clear_format",
             title = "Clear Edits",
             description = "Strip active styling tags",
-            icon = Icons.Default.Close,
+            icon = Icons.Outlined.Close,
             category = "Text Size Scale",
             tab = "Home",
             actionId = "clear_format"
         ),
 
         // --- INSERT TAB TOOLS ---
-        RibbonTool(id = "cover_page", title = "Cover Page", description = "Cover Page", icon = Icons.Default.Description, category = "Pages", tab = "Insert", actionId = "cover_page"),
-        RibbonTool(id = "blank_page", title = "Blank Page", description = "Blank Page", icon = Icons.Default.NoteAdd, category = "Pages", tab = "Insert", actionId = "blank_page"),
-        RibbonTool(id = "page_break", title = "Page Break", description = "Page Break", icon = Icons.Default.VerticalAlignBottom, category = "Pages", tab = "Insert", actionId = "page_break"),
-        RibbonTool(id = "insert_table", title = "Table", description = "Insert Table", icon = Icons.Default.TableChart, category = "Tables", tab = "Insert", actionId = "insert_table"),
-        RibbonTool(id = "picture", title = "Picture", description = "Picture", icon = Icons.Default.Image, category = "Illustrations", tab = "Insert", actionId = "picture"),
-        RibbonTool(id = "shapes", title = "Shapes", description = "Shapes", icon = Icons.Default.Category, category = "Illustrations", tab = "Insert", actionId = "shapes"),
-        RibbonTool(id = "chart", title = "Chart", description = "Chart", icon = Icons.Default.BarChart, category = "Illustrations", tab = "Insert", actionId = "chart"),
-        RibbonTool(id = "hyperlink", title = "Link", description = "Link", icon = Icons.Default.Link, category = "Links", tab = "Insert", actionId = "hyperlink"),
-        RibbonTool(id = "bookmark", title = "Bookmark", description = "Bookmark", icon = Icons.Default.Bookmark, category = "Links", tab = "Insert", actionId = "bookmark"),
-        RibbonTool(id = "header_footer", title = "Header & Footer", description = "Header & Footer", icon = Icons.Default.ViewAgenda, category = "Header & Footer", tab = "Insert", actionId = "header_footer"),
-        RibbonTool(id = "text_box", title = "Text Box", description = "Text Box", icon = Icons.Default.TextFields, category = "Text", tab = "Insert", actionId = "text_box"),
+        RibbonTool(id = "cover_page", title = "Cover Page", description = "Cover Page", icon = Icons.Outlined.Description, category = "Pages", tab = "Insert", actionId = "cover_page"),
+        RibbonTool(id = "blank_page", title = "Blank Page", description = "Blank Page", icon = Icons.Outlined.NoteAdd, category = "Pages", tab = "Insert", actionId = "blank_page"),
+        RibbonTool(id = "page_break", title = "Page Break", description = "Page Break", icon = Icons.Outlined.VerticalAlignBottom, category = "Pages", tab = "Insert", actionId = "page_break"),
+        RibbonTool(id = "insert_table", title = "Table", description = "Insert Table", icon = Icons.Outlined.TableChart, category = "Tables", tab = "Insert", actionId = "insert_table"),
+        RibbonTool(id = "picture", title = "Picture", description = "Picture", icon = Icons.Outlined.Image, category = "Illustrations", tab = "Insert", actionId = "picture"),
+        RibbonTool(id = "shapes", title = "Shapes", description = "Shapes", icon = Icons.Outlined.Category, category = "Illustrations", tab = "Insert", actionId = "shapes"),
+        RibbonTool(id = "chart", title = "Chart", description = "Chart", icon = Icons.Outlined.BarChart, category = "Illustrations", tab = "Insert", actionId = "chart"),
+        RibbonTool(id = "hyperlink", title = "Link", description = "Link", icon = Icons.Outlined.Link, category = "Links", tab = "Insert", actionId = "hyperlink"),
+        RibbonTool(id = "bookmark", title = "Bookmark", description = "Bookmark", icon = Icons.Outlined.Bookmark, category = "Links", tab = "Insert", actionId = "bookmark"),
+        RibbonTool(id = "header_footer", title = "Header & Footer", description = "Header & Footer", icon = Icons.Outlined.ViewAgenda, category = "Header & Footer", tab = "Insert", actionId = "header_footer"),
+        RibbonTool(id = "text_box", title = "Text Box", description = "Text Box", icon = Icons.Outlined.TextFields, category = "Text", tab = "Insert", actionId = "text_box"),
 
         // --- LAYOUT TAB TOOLS ---
         // 1. Page Setup Group
-        RibbonTool(id = "margins", title = "Margins", description = "Set Page Margins", icon = Icons.Default.SettingsOverscan, category = "Page Setup", tab = "Layout", actionId = "margins", hasDropdown = true),
-        RibbonTool(id = "orientation", title = "Orientation", description = "Page Orientation", icon = Icons.Default.ScreenRotation, category = "Page Setup", tab = "Layout", actionId = "orientation", hasDropdown = true),
-        RibbonTool(id = "size", title = "Size", description = "Page Size", icon = Icons.Default.AspectRatio, category = "Page Setup", tab = "Layout", actionId = "size", hasDropdown = true),
-        RibbonTool(id = "columns", title = "Columns", description = "Page Columns", icon = Icons.Default.ViewColumn, category = "Page Setup", tab = "Layout", actionId = "columns", hasDropdown = true),
-        RibbonTool(id = "breaks", title = "Breaks", description = "Page Breaks", icon = Icons.Default.KeyboardReturn, category = "Page Setup", tab = "Layout", actionId = "breaks", hasDropdown = true),
+        RibbonTool(id = "margins", title = "Margins", description = "Set Page Margins", icon = Icons.Outlined.SettingsOverscan, category = "Page Setup", tab = "Layout", actionId = "margins", hasDropdown = true),
+        RibbonTool(id = "orientation", title = "Orientation", description = "Page Orientation", icon = Icons.Outlined.ScreenRotation, category = "Page Setup", tab = "Layout", actionId = "orientation", hasDropdown = true),
+        RibbonTool(id = "size", title = "Size", description = "Page Size", icon = Icons.Outlined.AspectRatio, category = "Page Setup", tab = "Layout", actionId = "size", hasDropdown = true),
+        RibbonTool(id = "columns", title = "Columns", description = "Page Columns", icon = Icons.Outlined.ViewColumn, category = "Page Setup", tab = "Layout", actionId = "columns", hasDropdown = true),
+        RibbonTool(id = "breaks", title = "Breaks", description = "Page Breaks", icon = Icons.Outlined.KeyboardReturn, category = "Page Setup", tab = "Layout", actionId = "breaks", hasDropdown = true),
 
         // 2. Themes Group
-        RibbonTool(id = "theme_apply", title = "Themes", description = "Document Themes", icon = Icons.Default.ColorLens, category = "Themes", tab = "Layout", actionId = "theme_apply", hasDropdown = true),
-        RibbonTool(id = "theme_colors", title = "Colors", description = "Theme Colors", icon = Icons.Default.Palette, category = "Themes", tab = "Layout", actionId = "theme_colors", hasDropdown = true),
-        RibbonTool(id = "theme_fonts", title = "Fonts", description = "Theme Fonts", icon = Icons.Default.FontDownload, category = "Themes", tab = "Layout", actionId = "theme_fonts", hasDropdown = true),
-        RibbonTool(id = "theme_effects", title = "Effects", description = "Theme Effects", icon = Icons.Default.AutoAwesome, category = "Themes", tab = "Layout", actionId = "theme_effects", hasDropdown = true),
+        RibbonTool(id = "theme_apply", title = "Themes", description = "Document Themes", icon = Icons.Outlined.ColorLens, category = "Themes", tab = "Layout", actionId = "theme_apply", hasDropdown = true),
+        RibbonTool(id = "theme_colors", title = "Colors", description = "Theme Colors", icon = Icons.Outlined.Palette, category = "Themes", tab = "Layout", actionId = "theme_colors", hasDropdown = true),
+        RibbonTool(id = "theme_fonts", title = "Fonts", description = "Theme Fonts", icon = Icons.Outlined.FontDownload, category = "Themes", tab = "Layout", actionId = "theme_fonts", hasDropdown = true),
+        RibbonTool(id = "theme_effects", title = "Effects", description = "Theme Effects", icon = Icons.Outlined.AutoAwesome, category = "Themes", tab = "Layout", actionId = "theme_effects", hasDropdown = true),
 
         // 3. Page Background Group
-        RibbonTool(id = "watermark", title = "Watermark", description = "Page Watermark", icon = Icons.Default.BrandingWatermark, category = "Page Background", tab = "Layout", actionId = "watermark", hasDropdown = true),
-        RibbonTool(id = "page_color", title = "Page Color", description = "Page Background Color", icon = Icons.Default.FormatColorFill, category = "Page Background", tab = "Layout", actionId = "page_color", hasDropdown = true),
-        RibbonTool(id = "page_borders", title = "Page Borders", description = "Page Borders", icon = Icons.Default.BorderAll, category = "Page Background", tab = "Layout", actionId = "page_borders", hasDropdown = false),
+        RibbonTool(id = "watermark", title = "Watermark", description = "Page Watermark", icon = Icons.Outlined.BrandingWatermark, category = "Page Background", tab = "Layout", actionId = "watermark", hasDropdown = true),
+        RibbonTool(id = "page_color", title = "Page Color", description = "Page Background Color", icon = Icons.Outlined.FormatColorFill, category = "Page Background", tab = "Layout", actionId = "page_color", hasDropdown = true),
+        RibbonTool(id = "page_borders", title = "Page Borders", description = "Page Borders", icon = Icons.Outlined.BorderAll, category = "Page Background", tab = "Layout", actionId = "page_borders", hasDropdown = false),
 
         // References Tab Tools removed
 
         // --- REVIEW TAB TOOLS ---
-        RibbonTool(id = "spelling_grammar", title = "Spelling", description = "Spelling", icon = Icons.Default.Spellcheck, category = "Proofing", tab = "Review", actionId = "spelling_grammar", hasDropdown = false),
-        RibbonTool(id = "thesaurus", title = "Thesaurus", description = "Thesaurus", icon = Icons.Default.MenuBook, category = "Proofing", tab = "Review", actionId = "thesaurus", hasDropdown = false),
-        RibbonTool(id = "word_count", title = "Word Count", description = "Word Count", icon = Icons.Default.Numbers, category = "Proofing", tab = "Review", actionId = "word_count", hasDropdown = false),
-        RibbonTool(id = "read_aloud", title = "Read Aloud", description = "Read Aloud", icon = Icons.Default.VolumeUp, category = "Speech", tab = "Review", actionId = "read_aloud", hasDropdown = false),
-        RibbonTool(id = "check_accessibility", title = "Accessibility", description = "Accessibility", icon = Icons.Default.Accessibility, category = "Accessibility", tab = "Review", actionId = "check_accessibility", hasDropdown = false),
-        RibbonTool(id = "translate", title = "Translate", description = "Translate", icon = Icons.Default.Translate, category = "Language", tab = "Review", actionId = "translate", hasDropdown = true),
-        RibbonTool(id = "language", title = "Language", description = "Language", icon = Icons.Default.Language, category = "Language", tab = "Review", actionId = "language", hasDropdown = true),
-        RibbonTool(id = "new_comment", title = "New Comment", description = "New Comment", icon = Icons.Default.AddComment, category = "Comments", tab = "Review", actionId = "new_comment", hasDropdown = false),
-        RibbonTool(id = "delete_comment", title = "Delete", description = "Delete", icon = Icons.Default.DeleteOutline, category = "Comments", tab = "Review", actionId = "delete_comment", hasDropdown = false),
-        RibbonTool(id = "show_comments", title = "Show Comments", description = "Show Comments", icon = Icons.Default.Chat, category = "Comments", tab = "Review", actionId = "show_comments", hasDropdown = false),
-        RibbonTool(id = "track_changes", title = "Track Changes", description = "Track Changes", icon = Icons.Default.EditNote, category = "Tracking", tab = "Review", actionId = "track_changes", hasDropdown = true),
+        RibbonTool(id = "spelling_grammar", title = "Spelling", description = "Spelling", icon = Icons.Outlined.Spellcheck, category = "Proofing", tab = "Review", actionId = "spelling_grammar", hasDropdown = false),
+        RibbonTool(id = "thesaurus", title = "Thesaurus", description = "Thesaurus", icon = Icons.Outlined.MenuBook, category = "Proofing", tab = "Review", actionId = "thesaurus", hasDropdown = false),
+        RibbonTool(id = "word_count", title = "Word Count", description = "Word Count", icon = Icons.Outlined.Numbers, category = "Proofing", tab = "Review", actionId = "word_count", hasDropdown = false),
+        RibbonTool(id = "read_aloud", title = "Read Aloud", description = "Read Aloud", icon = Icons.Outlined.VolumeUp, category = "Speech", tab = "Review", actionId = "read_aloud", hasDropdown = false),
+        RibbonTool(id = "check_accessibility", title = "Accessibility", description = "Accessibility", icon = Icons.Outlined.Accessibility, category = "Accessibility", tab = "Review", actionId = "check_accessibility", hasDropdown = false),
+        RibbonTool(id = "translate", title = "Translate", description = "Translate", icon = Icons.Outlined.Translate, category = "Language", tab = "Review", actionId = "translate", hasDropdown = true),
+        RibbonTool(id = "language", title = "Language", description = "Language", icon = Icons.Outlined.Language, category = "Language", tab = "Review", actionId = "language", hasDropdown = true),
+        RibbonTool(id = "new_comment", title = "New Comment", description = "New Comment", icon = Icons.Outlined.AddComment, category = "Comments", tab = "Review", actionId = "new_comment", hasDropdown = false),
+        RibbonTool(id = "delete_comment", title = "Delete", description = "Delete", icon = Icons.Outlined.DeleteOutline, category = "Comments", tab = "Review", actionId = "delete_comment", hasDropdown = false),
+        RibbonTool(id = "show_comments", title = "Show Comments", description = "Show Comments", icon = Icons.Outlined.Chat, category = "Comments", tab = "Review", actionId = "show_comments", hasDropdown = false),
+        RibbonTool(id = "track_changes", title = "Track Changes", description = "Track Changes", icon = Icons.Outlined.EditNote, category = "Tracking", tab = "Review", actionId = "track_changes", hasDropdown = true),
 
         // --- AI ASSISTANT TAB TOOLS ---
         RibbonTool(
             id = "ai_summarize",
             title = "Summarize Text",
             description = "Summarize Text",
-            icon = Icons.Default.AutoAwesome,
+            icon = Icons.Outlined.AutoAwesome,
             category = "AI Co Pilot Engine",
             tab = "AI Assistant",
             actionId = "ai_summarize"
@@ -721,7 +722,7 @@ fun getRibbonTools(
             id = "ai_improve",
             title = "Improve Tone",
             description = "Improve Tone",
-            icon = Icons.Default.AutoFixHigh,
+            icon = Icons.Outlined.AutoFixHigh,
             category = "AI Co Pilot Engine",
             tab = "AI Assistant",
             actionId = "ai_improve"
@@ -730,7 +731,7 @@ fun getRibbonTools(
             id = "ai_grammar",
             title = "Fix Grammar",
             description = "Fix Grammar Error",
-            icon = Icons.Default.Spellcheck,
+            icon = Icons.Outlined.Spellcheck,
             category = "AI Co Pilot Engine",
             tab = "AI Assistant",
             actionId = "ai_grammar"
@@ -739,7 +740,7 @@ fun getRibbonTools(
             id = "ai_topics",
             title = "Suggest Topics",
             description = "Suggest Topics",
-            icon = Icons.Default.Lightbulb,
+            icon = Icons.Outlined.Lightbulb,
             category = "Creative Writing Vectors",
             tab = "AI Assistant",
             actionId = "ai_topics"
@@ -1282,7 +1283,7 @@ fun RibbonDropdown(
                 modifier = Modifier.weight(1f)
             )
             Icon(
-                imageVector = Icons.Default.ArrowDropDown,
+                imageVector = Icons.Outlined.ArrowDropDown,
                 contentDescription = "Dropdown Arrow",
                 tint = if (isDarkTheme) Color.LightGray else Color.Gray,
                 modifier = Modifier.size(16.dp)
@@ -1576,7 +1577,7 @@ fun WorkspacePane(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Search,
+                                        imageVector = Icons.Outlined.Search,
                                         contentDescription = "Search Ribbon Icon",
                                         tint = if (isDarkTheme) Color.LightGray else Color.Gray,
                                         modifier = Modifier.size(18.dp)
@@ -1613,7 +1614,7 @@ fun WorkspacePane(
                                     modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.KeyboardArrowDown,
+                                        imageVector = Icons.Outlined.KeyboardArrowDown,
                                         contentDescription = "Collapse Ribbon Panel",
                                         tint = if (isDarkTheme) Color.LightGray else Color.DarkGray
                                     )
@@ -1670,7 +1671,7 @@ fun WorkspacePane(
                                         verticalArrangement = Arrangement.Center
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.Info,
+                                            imageVector = Icons.Outlined.Info,
                                             contentDescription = "No tools matched query",
                                             tint = Color.LightGray,
                                             modifier = Modifier.size(40.dp)
@@ -1996,7 +1997,7 @@ fun WorkspacePane(
                                                                 modifier = Modifier.weight(1f),
                                                                 customContent = {
                                                                     Icon(
-                                                                        imageVector = Icons.Default.Edit,
+                                                                        imageVector = Icons.Outlined.Edit,
                                                                         contentDescription = "Highlight",
                                                                         tint = if (isSystemInDarkTheme()) Color(0xFF94A3B8) else Color(0xFF64748B),
                                                                         modifier = Modifier.size(18.dp).rotate(-45f)
@@ -2053,7 +2054,7 @@ fun WorkspacePane(
                                                             )
 
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.Add,
+                                                                icon = Icons.Outlined.Add,
                                                                 contentDescription = "Increase Font Size",
                                                                 onClick = {
                                                                     onAction("font_incr")
@@ -2067,7 +2068,7 @@ fun WorkspacePane(
                                                             )
 
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.Delete,
+                                                                icon = Icons.Outlined.Delete,
                                                                 contentDescription = "Decrease Font Size",
                                                                 onClick = {
                                                                     onAction("font_decr")
@@ -2081,7 +2082,7 @@ fun WorkspacePane(
                                                             )
 
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.Refresh,
+                                                                icon = Icons.Outlined.Refresh,
                                                                 contentDescription = "Change Case",
                                                                 onClick = {
                                                                     val selection = editorTextFieldValue.selection
@@ -2119,7 +2120,7 @@ fun WorkspacePane(
                                                             )
 
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.Close,
+                                                                icon = Icons.Outlined.Close,
                                                                 contentDescription = "Clear Formatting",
                                                                 onClick = {
                                                                     onAction("clear_format")
@@ -2136,28 +2137,28 @@ fun WorkspacePane(
                                                             verticalAlignment = Alignment.CenterVertically
                                                         ) {
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.Build,
+                                                                icon = Icons.Outlined.Build,
                                                                 contentDescription = "Bold",
                                                                 onClick = { onAction("bold") },
                                                                 colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor,
                                                                 modifier = Modifier.weight(1f)
                                                             )
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.Refresh,
+                                                                icon = Icons.Outlined.Refresh,
                                                                 contentDescription = "Italic",
                                                                 onClick = { onAction("italic") },
                                                                 colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor,
                                                                 modifier = Modifier.weight(1f)
                                                             )
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.KeyboardArrowDown,
+                                                                icon = Icons.Outlined.KeyboardArrowDown,
                                                                 contentDescription = "Underline",
                                                                 onClick = { onAction("underline") },
                                                                 colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor,
                                                                 modifier = Modifier.weight(1f)
                                                             )
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.Close,
+                                                                icon = Icons.Outlined.Close,
                                                                 contentDescription = "Strikethrough",
                                                                 onClick = {
                                                                     onContentChange(draftContent + " ~~Strikethrough~~")
@@ -2169,7 +2170,7 @@ fun WorkspacePane(
                                                                 modifier = Modifier.weight(1f)
                                                             )
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.KeyboardArrowDown,
+                                                                icon = Icons.Outlined.KeyboardArrowDown,
                                                                 contentDescription = "Subscript",
                                                                 onClick = {
                                                                     onContentChange(draftContent + " <sub>sub</sub>")
@@ -2181,7 +2182,7 @@ fun WorkspacePane(
                                                                 modifier = Modifier.weight(1f)
                                                             )
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.KeyboardArrowUp,
+                                                                icon = Icons.Outlined.KeyboardArrowUp,
                                                                 contentDescription = "Superscript",
                                                                 onClick = {
                                                                     onContentChange(draftContent + " <sup>super</sup>")
@@ -2193,7 +2194,7 @@ fun WorkspacePane(
                                                                 modifier = Modifier.weight(1f)
                                                             )
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.Favorite,
+                                                                icon = Icons.Outlined.Favorite,
                                                                 contentDescription = "Font Color",
                                                                 onClick = {
                                                                     coroutineScope.launch {
@@ -2204,7 +2205,7 @@ fun WorkspacePane(
                                                                 modifier = Modifier.weight(1f)
                                                             )
                                                             RibbonIconButton(
-                                                                icon = Icons.Default.Star,
+                                                                icon = Icons.Outlined.Star,
                                                                 contentDescription = "Highlight",
                                                                 onClick = {
                                                                     coroutineScope.launch {
@@ -2255,7 +2256,7 @@ fun WorkspacePane(
                                                                 horizontalAlignment = Alignment.CenterHorizontally
                                                             ) {
                                                                 Icon(
-                                                                    imageVector = Icons.Default.Done,
+                                                                    imageVector = Icons.Outlined.Done,
                                                                     contentDescription = "Paste",
                                                                     tint = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor,
                                                                     modifier = Modifier.size(24.dp)
@@ -2276,7 +2277,7 @@ fun WorkspacePane(
                                                                     }
                                                                 }, contentAlignment = Alignment.Center) {
                                                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                                                                        Icon(Icons.Default.Close, contentDescription = "Cut", modifier = Modifier.size(14.dp), tint = if (isSystemInDarkTheme()) Color.LightGray else Color.Gray)
+                                                                        Icon(Icons.Outlined.Close, contentDescription = "Cut", modifier = Modifier.size(14.dp), tint = if (isSystemInDarkTheme()) Color.LightGray else Color.Gray)
                                                                         Spacer(modifier = Modifier.width(4.dp))
                                                                         Text("Cut", fontSize = 10.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
                                                                     }
@@ -2287,7 +2288,7 @@ fun WorkspacePane(
                                                                     }
                                                                 }, contentAlignment = Alignment.Center) {
                                                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                                                                        Icon(Icons.Default.Share, contentDescription = "Copy", modifier = Modifier.size(14.dp), tint = if (isSystemInDarkTheme()) Color.LightGray else Color.Gray)
+                                                                        Icon(Icons.Outlined.Share, contentDescription = "Copy", modifier = Modifier.size(14.dp), tint = if (isSystemInDarkTheme()) Color.LightGray else Color.Gray)
                                                                         Spacer(modifier = Modifier.width(4.dp))
                                                                         Text("Copy", fontSize = 10.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
                                                                     }
@@ -2308,7 +2309,7 @@ fun WorkspacePane(
                                                                     }
                                                                 }, contentAlignment = Alignment.Center) {
                                                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                                                                        Icon(Icons.Default.Build, contentDescription = "Painter", modifier = Modifier.size(14.dp), tint = if (isSystemInDarkTheme()) Color.LightGray else Color.Gray)
+                                                                        Icon(Icons.Outlined.Build, contentDescription = "Painter", modifier = Modifier.size(14.dp), tint = if (isSystemInDarkTheme()) Color.LightGray else Color.Gray)
                                                                         Spacer(modifier = Modifier.width(4.dp))
                                                                         Text("Paint Style", fontSize = 10.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
                                                                     }
@@ -2319,7 +2320,7 @@ fun WorkspacePane(
                                                                     }
                                                                 }, contentAlignment = Alignment.Center) {
                                                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                                                                        Icon(Icons.Default.Info, contentDescription = "History", modifier = Modifier.size(14.dp), tint = if (isSystemInDarkTheme()) Color.LightGray else Color.Gray)
+                                                                        Icon(Icons.Outlined.Info, contentDescription = "History", modifier = Modifier.size(14.dp), tint = if (isSystemInDarkTheme()) Color.LightGray else Color.Gray)
                                                                         Spacer(modifier = Modifier.width(4.dp))
                                                                         Text("History", fontSize = 10.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
                                                                     }
@@ -2340,10 +2341,10 @@ fun WorkspacePane(
                                                 ) {
                                                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                            RibbonIconButton(icon = Icons.Default.Menu, contentDescription = "Align Left", onClick = { onAction("align_left") }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
-                                                            RibbonIconButton(icon = Icons.Default.MoreVert, contentDescription = "Align Center", onClick = { onAction("align_center") }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
-                                                            RibbonIconButton(icon = Icons.Default.Menu, contentDescription = "Align Right", onClick = { onAction("align_right") }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
-                                                            RibbonIconButton(icon = Icons.Default.Menu, contentDescription = "Justify", onClick = {
+                                                            RibbonIconButton(icon = Icons.Outlined.Menu, contentDescription = "Align Left", onClick = { onAction("align_left") }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
+                                                            RibbonIconButton(icon = Icons.Outlined.MoreVert, contentDescription = "Align Center", onClick = { onAction("align_center") }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
+                                                            RibbonIconButton(icon = Icons.Outlined.Menu, contentDescription = "Align Right", onClick = { onAction("align_right") }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
+                                                            RibbonIconButton(icon = Icons.Outlined.Menu, contentDescription = "Justify", onClick = {
                                                                 textAlignment = TextAlign.Justify
                                                                 coroutineScope.launch { snackbarHostState.showSnackbar("Text alignment set to Justified") }
                                                             }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
@@ -2745,11 +2746,11 @@ fun WorkspacePane(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val ribbonTabs = listOf(
-                            Triple("Home", Icons.Default.Home, "ribbon_tab_Home"),
-                            Triple("Insert", Icons.Default.Add, "ribbon_tab_Insert"),
-                            Triple("AI Assistant", Icons.Default.Star, "ribbon_tab_AIAssistant"),
-                            Triple("Layout", Icons.Default.Settings, "ribbon_tab_Layout"),
-                            Triple("Review", Icons.Default.Check, "ribbon_tab_Review")
+                            Triple("Home", Icons.Outlined.Home, "ribbon_tab_Home"),
+                            Triple("Insert", Icons.Outlined.Add, "ribbon_tab_Insert"),
+                            Triple("AI Assistant", Icons.Outlined.Star, "ribbon_tab_AIAssistant"),
+                            Triple("Layout", Icons.Outlined.Settings, "ribbon_tab_Layout"),
+                            Triple("Review", Icons.Outlined.Check, "ribbon_tab_Review")
                         )
 
                         ribbonTabs.forEach { (tabName, icon, tag) ->
@@ -2855,7 +2856,7 @@ fun EmptyWorkspaceState(
                 modifier = Modifier.padding(end = 4.dp)
             ) {
                 Icon(
-                    imageVector = if (isSidebarExpanded) Icons.Default.Close else Icons.Default.Menu,
+                    imageVector = if (isSidebarExpanded) Icons.Outlined.Close else Icons.Outlined.Menu,
                     contentDescription = "Toggle Drawer Menu",
                     tint = Color(0xFF1A1C1E)
                 )
@@ -2875,7 +2876,7 @@ fun EmptyWorkspaceState(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.Search,
+                    imageVector = Icons.Outlined.Search,
                     contentDescription = "Search",
                     tint = Color(0xFF44474E),
                     modifier = Modifier.size(20.dp)
@@ -3097,7 +3098,7 @@ fun EmptyWorkspaceState(
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Info,
+                                    imageVector = Icons.Outlined.Info,
                                     contentDescription = "Empty",
                                     tint = Color.LightGray,
                                     modifier = Modifier.size(54.dp)
@@ -3229,7 +3230,7 @@ fun EmptyWorkspaceState(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(Icons.Default.Share, contentDescription = "Simulate")
+                            Icon(Icons.Outlined.Share, contentDescription = "Simulate")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Simulate Co-Editor Background Edits", fontWeight = FontWeight.Bold)
                         }
@@ -3341,7 +3342,7 @@ fun EmptyWorkspaceState(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Wipe")
+                            Icon(Icons.Outlined.Delete, contentDescription = "Wipe")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Clear All Local Sandbox Documents", fontWeight = FontWeight.Bold, color = Color.White)
                         }
@@ -3368,7 +3369,7 @@ fun EmptyWorkspaceState(
                         .testTag("bento_fab")
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        imageVector = Icons.Outlined.Add,
                         contentDescription = "Create New Document",
                         modifier = Modifier.size(28.dp)
                     )
@@ -3396,25 +3397,25 @@ fun EmptyWorkspaceState(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         BottomNavItem(
-                            icon = Icons.Default.Home,
+                            icon = Icons.Outlined.Home,
                             label = "Home",
                             isSelected = activeTab == "home",
                             onClick = { activeTab = "home" }
                         )
                         BottomNavItem(
-                            icon = Icons.Default.Search,
+                            icon = Icons.Outlined.Search,
                             label = "Files",
                             isSelected = activeTab == "files",
                             onClick = { activeTab = "files" }
                         )
                         BottomNavItem(
-                            icon = Icons.Default.Share,
+                            icon = Icons.Outlined.Share,
                             label = "Shared",
                             isSelected = activeTab == "shared",
                             onClick = { activeTab = "shared" }
                         )
                         BottomNavItem(
-                            icon = Icons.Default.Settings,
+                            icon = Icons.Outlined.Settings,
                             label = "Settings",
                             isSelected = activeTab == "settings",
                             onClick = { activeTab = "settings" }
@@ -3700,7 +3701,7 @@ fun StatsBentoSquare(
                 )
                 
                 Icon(
-                    imageVector = Icons.Default.Info,
+                    imageVector = Icons.Outlined.Info,
                     contentDescription = "Review Status",
                     tint = textColor,
                     modifier = Modifier.size(20.dp)
@@ -3969,7 +3970,7 @@ fun WorkspaceMenuBar(
         // Toggle Sidebar Button
         IconButton(onClick = onToggleSidebar) {
             Icon(
-                imageVector = if (isSidebarExpanded) Icons.Default.Close else Icons.Default.Menu,
+                imageVector = if (isSidebarExpanded) Icons.Outlined.Close else Icons.Outlined.Menu,
                 contentDescription = "Toggle Sidebar"
             )
         }
@@ -4041,7 +4042,7 @@ fun WorkspaceMenuBar(
             modifier = Modifier.testTag("close_document_button")
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.Outlined.ArrowBack,
                 contentDescription = "Exit to Dashboard",
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
@@ -4611,7 +4612,7 @@ fun SlidePresentationWorkspace(
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                     shape = RoundedCornerShape(6.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Slide", modifier = Modifier.size(16.dp))
+                    Icon(Icons.Outlined.Add, contentDescription = "Add Slide", modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Add Slide", fontSize = 12.sp)
                 }
@@ -4623,7 +4624,7 @@ fun SlidePresentationWorkspace(
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                     shape = RoundedCornerShape(6.dp)
                 ) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp))
+                    Icon(Icons.Outlined.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Delete Slide", fontSize = 12.sp)
                 }
@@ -4638,7 +4639,7 @@ fun SlidePresentationWorkspace(
                     shape = RoundedCornerShape(6.dp),
                     modifier = Modifier.testTag("play_slides_button")
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = "Play presentation", modifier = Modifier.size(16.dp))
+                    Icon(Icons.Outlined.PlayArrow, contentDescription = "Play presentation", modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Play Deck", fontSize = 12.sp)
                 }
@@ -4925,7 +4926,7 @@ fun FullscreenPresentationView(
 
                     IconButton(onClick = onExit) {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = Icons.Outlined.Close,
                             contentDescription = "Exit Presentation",
                             tint = if (activeSlide.theme == "charcoal") Color.White else Color.Black
                         )
@@ -4973,7 +4974,7 @@ fun FullscreenPresentationView(
                         enabled = activeIdx > 0
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.Outlined.ArrowBack,
                             contentDescription = "Previous Slide",
                             tint = if (activeSlide.theme == "charcoal") Color.White else Color.Black
                         )
@@ -4990,7 +4991,7 @@ fun FullscreenPresentationView(
                         enabled = activeIdx < slides.size - 1
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowForward,
+                            imageVector = Icons.Outlined.ArrowForward,
                             contentDescription = "Next Slide",
                             tint = if (activeSlide.theme == "charcoal") Color.White else Color.Black
                         )
@@ -5173,7 +5174,7 @@ fun TypeSelectionRow(
 
             if (isSelected) {
                 Icon(
-                    imageVector = Icons.Default.Check,
+                    imageVector = Icons.Outlined.Check,
                     contentDescription = "Selected",
                     tint = color,
                     modifier = Modifier.size(20.dp)
