@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontStyle
@@ -39,6 +40,12 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -1487,6 +1494,14 @@ fun WorkspacePane(
         var activeFontFamily by remember { mutableStateOf("Default") }
         var activeFontSize by remember { mutableStateOf("16") }
 
+        @OptIn(ExperimentalLayoutApi::class)
+        val isImeVisible = WindowInsets.isImeVisible
+        LaunchedEffect(isImeVisible) {
+            if (isImeVisible) {
+                isRibbonExpanded = false
+            }
+        }
+
         val coroutineScope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
 
@@ -1516,7 +1531,14 @@ fun WorkspacePane(
 
             val coercedRibbonHeight = ribbonHeightDp.coerceIn(minHeightDp, maxHeightDp)
             val bottomNavBarHeight = 68.dp
-            val editorBottomPadding = bottomNavBarHeight + (if (isRibbonExpanded) coercedRibbonHeight else 0.dp)
+            
+            val targetRibbonHeight = if (isRibbonExpanded) coercedRibbonHeight else 0.dp
+            val animatedRibbonHeight by androidx.compose.animation.core.animateDpAsState(
+                targetValue = targetRibbonHeight,
+                animationSpec = spring(dampingRatio = 0.82f, stiffness = 400f),
+                label = "ribbonHeight"
+            )
+            val editorBottomPadding = bottomNavBarHeight + animatedRibbonHeight
 
             Column(
                 modifier = Modifier
@@ -2453,67 +2475,102 @@ fun WorkspacePane(
                                                     accentColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor
                                                 ) {
                                                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                            RibbonIconButton(icon = Icons.Outlined.Menu, contentDescription = "Align Left", onClick = { onAction("align_left") }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
-                                                            RibbonIconButton(icon = Icons.Outlined.MoreVert, contentDescription = "Align Center", onClick = { onAction("align_center") }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
-                                                            RibbonIconButton(icon = Icons.Outlined.Menu, contentDescription = "Align Right", onClick = { onAction("align_right") }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
-                                                            RibbonIconButton(icon = Icons.Outlined.Menu, contentDescription = "Justify", onClick = {
-                                                                textAlignment = TextAlign.Justify
-                                                                coroutineScope.launch { snackbarHostState.showSnackbar("Text alignment set to Justified") }
-                                                            }, colorSchemeColor = if (selectedDoc.type == "word") DocWordColor else if (selectedDoc.type == "sheet") DocSheetColor else DocSlideColor, modifier = Modifier.weight(1f))
-                                                        }
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            val iconColor = if (isSystemInDarkTheme()) Color(0xFFE0E0E0) else Color(0xFF333333)
+                                                            val labelColor = if (isSystemInDarkTheme()) Color(0xFFB0B0B0) else Color(0xFF555555)
+                                                            val dividerColor = if (isSystemInDarkTheme()) Color(0xFF444444) else Color(0xFFDDDDDD)
 
-                                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                            Box(modifier = Modifier.weight(1f).height(38.dp).clip(RoundedCornerShape(8.dp)).background(if (isSystemInDarkTheme()) Color(0xFF323236) else Color(0xFFF1F3F6)).clickable {
-                                                                onContentChange(draftContent + "\n\n- Bullet item\n- Bullet item")
-                                                                coroutineScope.launch { snackbarHostState.showSnackbar("Unordered bulleted list schema appended") }
-                                                            }, contentAlignment = Alignment.Center) {
-                                                                Text("• Bullets", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
+                                                            @Composable
+                                                            fun RibbonFeatureButton(
+                                                                icon: androidx.compose.ui.graphics.vector.ImageVector,
+                                                                label: String,
+                                                                onClick: () -> Unit
+                                                            ) {
+                                                                Column(
+                                                                    modifier = Modifier
+                                                                        .defaultMinSize(minWidth = 52.dp, minHeight = 52.dp)
+                                                                        .clip(RoundedCornerShape(6.dp))
+                                                                        .clickable(onClick = onClick)
+                                                                        .padding(4.dp),
+                                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                                    verticalArrangement = Arrangement.Center
+                                                                ) {
+                                                                    Icon(
+                                                                        imageVector = icon,
+                                                                        contentDescription = label,
+                                                                        modifier = Modifier.size(24.dp),
+                                                                        tint = iconColor
+                                                                    )
+                                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                                    Text(
+                                                                        text = label,
+                                                                        fontSize = 11.sp,
+                                                                        color = labelColor,
+                                                                        textAlign = TextAlign.Center
+                                                                    )
+                                                                }
                                                             }
-                                                            Box(modifier = Modifier.weight(1f).height(38.dp).clip(RoundedCornerShape(8.dp)).background(if (isSystemInDarkTheme()) Color(0xFF323236) else Color(0xFFF1F3F6)).clickable {
-                                                                onContentChange(draftContent + "\n\n1. Number item\n2. Number item")
-                                                                coroutineScope.launch { snackbarHostState.showSnackbar("Ordered numbered list schema appended") }
-                                                            }, contentAlignment = Alignment.Center) {
-                                                                Text("1. Numbering", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
-                                                            }
-                                                            Box(modifier = Modifier.weight(1.2f).height(38.dp).clip(RoundedCornerShape(8.dp)).background(if (isSystemInDarkTheme()) Color(0xFF323236) else Color(0xFFF1F3F6)).clickable {
-                                                                onContentChange(draftContent + "\n\n1. Level 1\n   1.1. Level 2\n   1.1.1. Level 3")
-                                                                coroutineScope.launch { snackbarHostState.showSnackbar("Multilevel outline tree schema appended") }
-                                                            }, contentAlignment = Alignment.Center) {
-                                                                Text("1.1 Multilevel", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
-                                                            }
-                                                        }
 
-                                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                            Box(modifier = Modifier.weight(1.2f).height(38.dp).clip(RoundedCornerShape(8.dp)).background(if (isSystemInDarkTheme()) Color(0xFF323236) else Color(0xFFF1F3F6)).clickable {
-                                                                onContentChange(draftContent.lines().joinToString("\n") { if (it.startsWith("   ")) it.substring(3) else it })
-                                                                coroutineScope.launch { snackbarHostState.showSnackbar("Paragraph indentation decreased") }
-                                                            }, contentAlignment = Alignment.Center) {
-                                                                Text("← Dec Indent", fontSize = 10.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
+                                                            // ALIGNMENT SECTION
+                                                            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                                RibbonFeatureButton(icon = Icons.Outlined.FormatAlignLeft, label = "Left", onClick = { onAction("align_left") })
+                                                                RibbonFeatureButton(icon = Icons.Outlined.FormatAlignCenter, label = "Center", onClick = { onAction("align_center") })
+                                                                RibbonFeatureButton(icon = Icons.Outlined.FormatAlignRight, label = "Right", onClick = { onAction("align_right") })
+                                                                RibbonFeatureButton(icon = Icons.Outlined.FormatAlignJustify, label = "Justify", onClick = {
+                                                                    textAlignment = TextAlign.Justify
+                                                                    coroutineScope.launch { snackbarHostState.showSnackbar("Text alignment set to Justified") }
+                                                                })
                                                             }
-                                                            Box(modifier = Modifier.weight(1.2f).height(38.dp).clip(RoundedCornerShape(8.dp)).background(if (isSystemInDarkTheme()) Color(0xFF323236) else Color(0xFFF1F3F6)).clickable {
-                                                                onContentChange(draftContent.lines().joinToString("\n") { "   $it" })
-                                                                coroutineScope.launch { snackbarHostState.showSnackbar("Paragraph indentation increased") }
-                                                            }, contentAlignment = Alignment.Center) {
-                                                                Text("→ Inc Indent", fontSize = 10.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
-                                                            }
-                                                            Box(modifier = Modifier.weight(1.1f).height(38.dp).clip(RoundedCornerShape(8.dp)).background(if (isSystemInDarkTheme()) Color(0xFF323236) else Color(0xFFF1F3F6)).clickable {
-                                                                coroutineScope.launch { snackbarHostState.showSnackbar("Line spacing updated to 1.5x height") }
-                                                            }, contentAlignment = Alignment.Center) {
-                                                                Text("↕ Spacing", fontSize = 10.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
-                                                            }
-                                                        }
 
-                                                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                            Box(modifier = Modifier.weight(1f).height(38.dp).clip(RoundedCornerShape(8.dp)).background(if (isSystemInDarkTheme()) Color(0xFF323236) else Color(0xFFF1F3F6)).clickable {
-                                                                coroutineScope.launch { snackbarHostState.showSnackbar("Border Grid: Outlined grid border successfully applied") }
-                                                            }, contentAlignment = Alignment.Center) {
-                                                                Text("Grid Borders", fontSize = 10.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
+                                                            Box(modifier = Modifier.width(1.dp).height(50.dp).background(dividerColor))
+
+                                                            // LISTS SECTION
+                                                            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                                RibbonFeatureButton(icon = Icons.Outlined.FormatListBulleted, label = "Bullets", onClick = {
+                                                                    onContentChange(draftContent + "\n\n- Bullet item\n- Bullet item")
+                                                                    coroutineScope.launch { snackbarHostState.showSnackbar("Unordered bulleted list schema appended") }
+                                                                })
+                                                                RibbonFeatureButton(icon = Icons.Outlined.FormatListNumbered, label = "Numbering", onClick = {
+                                                                    onContentChange(draftContent + "\n\n1. Number item\n2. Number item")
+                                                                    coroutineScope.launch { snackbarHostState.showSnackbar("Ordered numbered list schema appended") }
+                                                                })
+                                                                RibbonFeatureButton(icon = Icons.Outlined.List, label = "Multilevel", onClick = {
+                                                                    onContentChange(draftContent + "\n\n1. Level 1\n   1.1. Level 2\n   1.1.1. Level 3")
+                                                                    coroutineScope.launch { snackbarHostState.showSnackbar("Multilevel outline tree schema appended") }
+                                                                })
                                                             }
-                                                            Box(modifier = Modifier.weight(1f).height(38.dp).clip(RoundedCornerShape(8.dp)).background(if (isSystemInDarkTheme()) Color(0xFF323236) else Color(0xFFF1F3F6)).clickable {
-                                                                coroutineScope.launch { snackbarHostState.showSnackbar("Text Paragraph Background Shading applied") }
-                                                            }, contentAlignment = Alignment.Center) {
-                                                                Text("Shading & Fill", fontSize = 10.sp, color = if (isSystemInDarkTheme()) Color.White else Color.Black)
+
+                                                            Box(modifier = Modifier.width(1.dp).height(50.dp).background(dividerColor))
+
+                                                            // INDENTATION SECTION
+                                                            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                                RibbonFeatureButton(icon = Icons.Outlined.FormatIndentDecrease, label = "Indent -", onClick = {
+                                                                    onContentChange(draftContent.lines().joinToString("\n") { if (it.startsWith("   ")) it.substring(3) else it })
+                                                                    coroutineScope.launch { snackbarHostState.showSnackbar("Paragraph indentation decreased") }
+                                                                })
+                                                                RibbonFeatureButton(icon = Icons.Outlined.FormatIndentIncrease, label = "Indent +", onClick = {
+                                                                    onContentChange(draftContent.lines().joinToString("\n") { "   $it" })
+                                                                    coroutineScope.launch { snackbarHostState.showSnackbar("Paragraph indentation increased") }
+                                                                })
+                                                            }
+
+                                                            Box(modifier = Modifier.width(1.dp).height(50.dp).background(dividerColor))
+
+                                                            // PARAGRAPH LAYOUT SECTION
+                                                            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                                RibbonFeatureButton(icon = Icons.Outlined.FormatLineSpacing, label = "Spacing", onClick = {
+                                                                    coroutineScope.launch { snackbarHostState.showSnackbar("Line spacing updated to 1.5x height") }
+                                                                })
+                                                                RibbonFeatureButton(icon = Icons.Outlined.BorderAll, label = "Borders", onClick = {
+                                                                    coroutineScope.launch { snackbarHostState.showSnackbar("Border Grid: Outlined grid border successfully applied") }
+                                                                })
+                                                                RibbonFeatureButton(icon = Icons.Outlined.FormatColorFill, label = "Shading", onClick = {
+                                                                    coroutineScope.launch { snackbarHostState.showSnackbar("Text Paragraph Background Shading applied") }
+                                                                })
                                                             }
                                                         }
                                                     }
@@ -4449,14 +4506,13 @@ fun WordDocumentEditor(
         else -> Color(0xFF2D2D2D)
     }
 
-    // Page constraints
     val paperMaxWidth = if (isLandscape) 1000.dp else 680.dp
-    val pageHeight = if (isLandscape) 750.dp else 1056.dp
+    val minPageHeight = if (isLandscape) 750.dp else 1056.dp
     
     var targetFocusPage by remember { mutableStateOf<Int?>(null) }
+    var targetFocusOffset by remember { mutableStateOf<Int?>(null) }
 
     Column(modifier = modifier) {
-        // Main Document Paper Container View
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -4481,7 +4537,7 @@ fun WordDocumentEditor(
                         modifier = Modifier
                             .fillMaxWidth()
                             .widthIn(max = paperMaxWidth)
-                            .height(pageHeight)
+                            .height(minPageHeight)
                     ) {
                         Column(
                             modifier = Modifier
@@ -4528,23 +4584,38 @@ fun WordDocumentEditor(
                             } else {
                                 val focusRequester = remember(pageIndex) { androidx.compose.ui.focus.FocusRequester() }
                                 
+                                var textFieldHeightPx by remember { mutableIntStateOf(0) }
+                                var splitOffset by remember { mutableIntStateOf(-1) }
+                                
+                                var pageTextFieldValue by remember { mutableStateOf(TextFieldValue(pageContent)) }
+                                var lastPushedText by remember { mutableStateOf(pageContent) }
+                                
                                 LaunchedEffect(targetFocusPage) {
                                     if (targetFocusPage == pageIndex) {
-                                        androidx.compose.ui.focus.FocusRequester.Default // just to be safe
+                                        androidx.compose.ui.focus.FocusRequester.Default // ensure class is loaded
                                         try {
                                             focusRequester.requestFocus()
                                         } catch(e: Exception) {}
                                     }
                                 }
                                 
-                                var textFieldHeightPx by remember { mutableIntStateOf(0) }
-                                var splitOffset by remember { mutableIntStateOf(-1) }
-                                
                                 LaunchedEffect(splitOffset) {
-                                    if (splitOffset != -1 && splitOffset < pageContent.length) {
+                                    val currentText = pageTextFieldValue.text
+                                    if (splitOffset != -1 && splitOffset <= currentText.length) {
                                         val newPages = pages.toMutableList()
-                                        val keptContent = pageContent.substring(0, splitOffset)
-                                        val overflowContent = pageContent.substring(splitOffset)
+                                        
+                                        var actualSplit = splitOffset
+                                        val lastSpace = currentText.lastIndexOf(' ', splitOffset)
+                                        if (lastSpace > splitOffset - 20 && lastSpace > 0) {
+                                            actualSplit = lastSpace + 1
+                                        }
+                                        
+                                        val keptContent = currentText.substring(0, actualSplit)
+                                        var overflowContent = currentText.substring(actualSplit)
+                                        
+                                        val origLen = overflowContent.length
+                                        overflowContent = overflowContent.trimStart(' ', '\n')
+                                        val trimmedChars = origLen - overflowContent.length
                                         
                                         newPages[pageIndex] = keptContent
                                         if (pageIndex + 1 < newPages.size) {
@@ -4553,45 +4624,87 @@ fun WordDocumentEditor(
                                             newPages.add(overflowContent)
                                         }
                                         
-                                        targetFocusPage = pageIndex + 1
+                                        if (pageTextFieldValue.selection.start >= actualSplit) {
+                                            targetFocusPage = pageIndex + 1
+                                            targetFocusOffset = maxOf(0, pageTextFieldValue.selection.start - actualSplit - trimmedChars)
+                                        }
                                         
                                         val newFullText = newPages.joinToString("\u000C")
                                         onContentChange(newFullText)
+                                        pageTextFieldValue = pageTextFieldValue.copy(
+                                            text = keptContent,
+                                            selection = TextRange(minOf(pageTextFieldValue.selection.start, keptContent.length))
+                                        )
+                                        lastPushedText = keptContent
                                         onTextFieldValueChange?.invoke(TextFieldValue(text = newFullText))
                                         splitOffset = -1
                                     }
                                 }
                                 
-                                BasicTextField(
-                                    value = pageContent,
-                                    onValueChange = { newText: String ->
-                                        val newPages = pages.toMutableList()
-                                        
-                                        // Handle potential delete backspace merging (deleted PageBreak)
-                                        if (newText.isEmpty() && pageContent.isEmpty() && pages.size > 1 && pageIndex > 0) {
-                                            newPages.removeAt(pageIndex)
-                                            targetFocusPage = pageIndex - 1
-                                            val newFullText = newPages.joinToString("\u000C")
-                                            onContentChange(newFullText)
-                                            onTextFieldValueChange?.invoke(TextFieldValue(text = newFullText))
+                                LaunchedEffect(pageContent, targetFocusPage) {
+                                    if (targetFocusPage == pageIndex && targetFocusOffset != null) {
+                                        pageTextFieldValue = pageTextFieldValue.copy(
+                                            text = pageContent,
+                                            selection = TextRange(targetFocusOffset!!)
+                                        )
+                                        lastPushedText = pageContent
+                                        targetFocusOffset = null
+                                    } else if (pageContent != lastPushedText) {
+                                        val newSelection = if (pageTextFieldValue.selection.start <= pageContent.length && pageTextFieldValue.selection.end <= pageContent.length) {
+                                            pageTextFieldValue.selection
                                         } else {
-                                            newPages[pageIndex] = newText
-                                            val newFullText = newPages.joinToString("\u000C")
-                                            onContentChange(newFullText)
-                                            onTextFieldValueChange?.invoke(TextFieldValue(text = newFullText))
+                                            TextRange(pageContent.length)
                                         }
-                                    },
-                                    onTextLayout = { result: androidx.compose.ui.text.TextLayoutResult ->
-                                        if (textFieldHeightPx > 0 && result.size.height > textFieldHeightPx) {
-                                            val availableHeight = textFieldHeightPx.toFloat()
-                                            val line = (0 until result.lineCount).findLast { result.getLineBottom(it) <= availableHeight }
-                                            if (line != null && line < result.lineCount - 1 && line > 0 && splitOffset == -1) {
-                                                splitOffset = result.getLineEnd(line)
-                                            } else if (line == 0 && splitOffset == -1 && result.lineCount > 1) {
-                                                splitOffset = result.getLineEnd(0)
+                                        pageTextFieldValue = pageTextFieldValue.copy(text = pageContent, selection = newSelection)
+                                        lastPushedText = pageContent
+                                    }
+                                }
+                                
+                                BasicTextField(
+                                    value = pageTextFieldValue,
+                                    onValueChange = { newTfv ->
+                                        pageTextFieldValue = newTfv
+                                        
+                                        if (newTfv.text != lastPushedText) {
+                                            val newText = newTfv.text
+                                            lastPushedText = newText
+                                            val newPages = pages.toMutableList()
+                                            
+                                            if (newText.isEmpty() && pageContent.isEmpty() && pages.size > 1 && pageIndex > 0) {
+                                                // Handle backspace delete empty page
+                                                newPages.removeAt(pageIndex)
+                                                targetFocusPage = pageIndex - 1
+                                                val newFullText = newPages.joinToString("\u000C")
+                                                onContentChange(newFullText)
+                                                onTextFieldValueChange?.invoke(TextFieldValue(text = newFullText))
+                                            } else {
+                                                newPages[pageIndex] = newText
+                                                val newFullText = newPages.joinToString("\u000C")
+                                                onContentChange(newFullText)
+                                                onTextFieldValueChange?.invoke(TextFieldValue(text = newFullText))
                                             }
                                         }
                                     },
+                                    onTextLayout = { result: androidx.compose.ui.text.TextLayoutResult ->
+                                        if (textFieldHeightPx > 0 && result.size.height > (textFieldHeightPx - 50)) {
+                                            val availableHeight = (textFieldHeightPx - 50).toFloat()
+                                            val line = (0 until result.lineCount).findLast { result.getLineBottom(it) <= availableHeight }
+                                            if (line != null && line < result.lineCount - 1 && line > 0 && splitOffset == -1) {
+                                                val tentativeSplit = result.getLineEnd(line, visibleEnd = false)
+                                                if (tentativeSplit < pageTextFieldValue.text.length) {
+                                                    splitOffset = tentativeSplit
+                                                } else {
+                                                    splitOffset = result.getLineEnd(line - 1, visibleEnd = false)
+                                                }
+                                            } else if (line == 0 && splitOffset == -1 && result.lineCount > 1) {
+                                                val tentativeSplit = result.getLineEnd(0, visibleEnd = false)
+                                                if (tentativeSplit < pageTextFieldValue.text.length) {
+                                                    splitOffset = tentativeSplit
+                                                }
+                                            }
+                                        }
+                                    },
+                                    cursorBrush = androidx.compose.ui.graphics.SolidColor(paperTextColor),
                                     textStyle = MaterialTheme.typography.bodyLarge.copy(
                                         color = paperTextColor,
                                         lineHeight = 24.sp,
@@ -4601,9 +4714,35 @@ fun WordDocumentEditor(
                                     visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .weight(1f) // Ensure it fills available vertical space inside Column
+                                        .weight(1f)
                                         .onGloballyPositioned { textFieldHeightPx = it.size.height }
                                         .focusRequester(focusRequester)
+                                        .onPreviewKeyEvent { keyEvent ->
+                                            if (
+                                                keyEvent.type == androidx.compose.ui.input.key.KeyEventType.KeyDown &&
+                                                keyEvent.key == androidx.compose.ui.input.key.Key.Backspace &&
+                                                pageTextFieldValue.selection.start == 0 &&
+                                                pageTextFieldValue.selection.end == 0 &&
+                                                pageIndex > 0
+                                            ) {
+                                                val newPages = pages.toMutableList()
+                                                val prevText = newPages[pageIndex - 1]
+                                                val currentText = newPages[pageIndex]
+                                                
+                                                targetFocusPage = pageIndex - 1
+                                                targetFocusOffset = prevText.length
+                                                
+                                                newPages[pageIndex - 1] = prevText + currentText
+                                                newPages.removeAt(pageIndex)
+                                                
+                                                val newFullText = newPages.joinToString("\u000C")
+                                                onContentChange(newFullText)
+                                                onTextFieldValueChange?.invoke(TextFieldValue(text = newFullText))
+                                                true
+                                            } else {
+                                                false
+                                            }
+                                        }
                                         .onFocusChanged { 
                                             if (it.isFocused) {
                                                 onFocusChanged?.invoke(true)
