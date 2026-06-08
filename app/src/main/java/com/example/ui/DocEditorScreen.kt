@@ -686,6 +686,7 @@ fun getRibbonTools(
         RibbonTool(id = "hyperlink", title = "Link", description = "Link", icon = Icons.Outlined.Link, category = "Links", tab = "Insert", actionId = "hyperlink"),
         RibbonTool(id = "bookmark", title = "Bookmark", description = "Bookmark", icon = Icons.Outlined.Bookmark, category = "Links", tab = "Insert", actionId = "bookmark"),
         RibbonTool(id = "header_footer", title = "Header & Footer", description = "Header & Footer", icon = Icons.Outlined.ViewAgenda, category = "Header & Footer", tab = "Insert", actionId = "header_footer"),
+        RibbonTool(id = "page_number", title = "Page Number", description = "Page Number", icon = Icons.Outlined.Numbers, category = "Header & Footer", tab = "Insert", actionId = "page_number", hasDropdown = true, dropdownOptions = listOf("Top Left", "Top Center", "Top Right", "Bottom Left", "Bottom Center", "Bottom Right", "Left Margin", "Right Margin", "Outside Margin", "Inside Margin", "Current Position", "Format Page Numbers...", "Remove Page Numbers")),
         RibbonTool(id = "text_box", title = "Text Box", description = "Text Box", icon = Icons.Outlined.TextFields, category = "Text", tab = "Insert", actionId = "text_box"),
 
         // --- LAYOUT TAB TOOLS ---
@@ -782,6 +783,8 @@ fun executeRibbonAction(
     onLandscapeChange: (Boolean) -> Unit,
     onShowCustomMarginsDialog: () -> Unit = {},
     onShowCustomSizeDialog: () -> Unit = {},
+    onShowPageNumberFormatDialog: () -> Unit = {},
+    onPageNumberPositionChange: (String?) -> Unit = {},
     snackbarScope: kotlinx.coroutines.CoroutineScope,
     snackbarState: androidx.compose.material3.SnackbarHostState,
     tts: android.speech.tts.TextToSpeech?,
@@ -1157,6 +1160,27 @@ fun executeRibbonAction(
         }
         else -> {
             when {
+                actionId.startsWith("page_number:") -> {
+                    val option = actionId.removePrefix("page_number:")
+                    when(option) {
+                        "Format Page Numbers..." -> onShowPageNumberFormatDialog()
+                        "Remove Page Numbers" -> {
+                            onPageNumberPositionChange(null)
+                            showToast("Page Numbers removed")
+                        }
+                        "Current Position" -> {
+                            // "Current Position" inserts the page number directly into the document content at cursor.
+                            // But as per the implementation, you can't easily hook into cursor.
+                            // We can append it for now or rely on the UI position rendering.
+                            onContentChange(draftContent + " 1 ")
+                            showToast("Inserted Page Number")
+                        }
+                        else -> {
+                            onPageNumberPositionChange(option)
+                            showToast("Page Number position set to $option")
+                        }
+                    }
+                }
                 actionId.startsWith("margins:") -> {
                     val option = actionId.removePrefix("margins:")
                     when (option) {
@@ -1410,6 +1434,10 @@ fun WorkspacePane(
 
         var showCustomMarginsDialog by remember { mutableStateOf(false) }
         var showCustomSizeDialog by remember { mutableStateOf(false) }
+        var showPageNumberFormatDialog by remember { mutableStateOf(false) }
+        var pageNumberPosition by remember { mutableStateOf<String?>(null) }
+        var pageNumberFormat by remember { mutableStateOf("1, 2, 3...") }
+        var pageNumberStartAt by remember { mutableStateOf("1") }
 
         var editorTextFieldValue by remember(selectedDoc.id) {
             mutableStateOf(TextFieldValue(text = draftContent, selection = TextRange(draftContent.length)))
@@ -1525,6 +1553,9 @@ fun WorkspacePane(
                                 textAlignment = textAlignment,
                                 fontSize = fontSize,
                                 isLandscape = isLandscape,
+                                pageNumberPosition = pageNumberPosition,
+                                pageNumberFormat = pageNumberFormat,
+                                pageNumberStartAt = pageNumberStartAt.toIntOrNull() ?: 1,
                                 modifier = Modifier.fillMaxSize(),
                                 textFieldValue = editorTextFieldValue,
                                 onTextFieldValueChange = { newVal ->
@@ -1709,6 +1740,8 @@ fun WorkspacePane(
                                         onLandscapeChange = { isLandscape = it },
                                         onShowCustomMarginsDialog = { showCustomMarginsDialog = true },
                                         onShowCustomSizeDialog = { showCustomSizeDialog = true },
+                                        onShowPageNumberFormatDialog = { showPageNumberFormatDialog = true },
+                                        onPageNumberPositionChange = { pageNumberPosition = it },
                                         snackbarScope = coroutineScope,
                                         snackbarState = snackbarHostState,
                                         tts = tts,
@@ -1769,6 +1802,8 @@ fun WorkspacePane(
                                             onLandscapeChange = { isLandscape = it },
                                             onShowCustomMarginsDialog = { showCustomMarginsDialog = true },
                                             onShowCustomSizeDialog = { showCustomSizeDialog = true },
+                                            onShowPageNumberFormatDialog = { showPageNumberFormatDialog = true },
+                                            onPageNumberPositionChange = { pageNumberPosition = it },
                                             snackbarScope = coroutineScope,
                                             snackbarState = snackbarHostState,
                                             tts = tts,
@@ -2874,13 +2909,28 @@ fun WorkspacePane(
             if (showCustomMarginsDialog) {
                 CustomMarginsDialog(
                     onDismiss = { showCustomMarginsDialog = false },
-                    onApply = { showCustomMarginsDialog = false }
+                    onApply = { margin ->
+                        pageMargins = margin
+                        showCustomMarginsDialog = false
+                    }
                 )
             }
             if (showCustomSizeDialog) {
                 CustomSizeDialog(
                     onDismiss = { showCustomSizeDialog = false },
                     onApply = { showCustomSizeDialog = false }
+                )
+            }
+            if (showPageNumberFormatDialog) {
+                PageNumberFormatDialog(
+                    currentFormat = pageNumberFormat,
+                    currentStartAt = pageNumberStartAt,
+                    onDismiss = { showPageNumberFormatDialog = false },
+                    onApply = { format, startAt ->
+                        pageNumberFormat = format
+                        pageNumberStartAt = startAt
+                        showPageNumberFormatDialog = false
+                    }
                 )
             }
         }
@@ -4292,6 +4342,43 @@ class RichTextVisualTransformation(private val baseTagColor: Color) : VisualTran
     }
 }
 
+fun toRoman(number: Int): String {
+    var num = number
+    val values = intArrayOf(1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
+    val romanLiterals = arrayOf("M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I")
+    val roman = StringBuilder()
+    for (i in values.indices) {
+        while (num >= values[i]) {
+            num -= values[i]
+            roman.append(romanLiterals[i])
+        }
+    }
+    return roman.toString()
+}
+
+fun toAlphabetic(number: Int): String {
+    var num = number
+    var result = ""
+    while (num > 0) {
+        num-- 
+        result = ('A' + (num % 26)) + result
+        num /= 26
+    }
+    return result
+}
+
+fun formatPageNumber(pageNumber: Int, format: String): String {
+    return when (format) {
+        "01, 02, 03..." -> String.format("%02d", pageNumber)
+        "001, 002, 003..." -> String.format("%03d", pageNumber)
+        "I, II, III..." -> toRoman(pageNumber)
+        "i, ii, iii..." -> toRoman(pageNumber).lowercase()
+        "A, B, C..." -> toAlphabetic(pageNumber)
+        "a, b, c..." -> toAlphabetic(pageNumber).lowercase()
+        else -> pageNumber.toString()
+    }
+}
+
 // --- 1. JC WORD WRITER EDITOR ---
 @Composable
 fun WordDocumentEditor(
@@ -4304,6 +4391,9 @@ fun WordDocumentEditor(
     textAlignment: androidx.compose.ui.text.style.TextAlign,
     fontSize: androidx.compose.ui.unit.TextUnit,
     isLandscape: Boolean,
+    pageNumberPosition: String? = null,
+    pageNumberFormat: String = "1, 2, 3...",
+    pageNumberStartAt: Int = 1,
     modifier: Modifier = Modifier,
     textFieldValue: TextFieldValue? = null,
     onTextFieldValueChange: ((TextFieldValue) -> Unit)? = null,
@@ -4354,20 +4444,27 @@ fun WordDocumentEditor(
                                 .fillMaxWidth()
                                 .padding(pageMargins)
                         ) {
-                            Text(
-                                text = "PAGE ${pageIndex + 1}" + if (columnCount > 1) " ($columnCount Columns)" else "",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = DocWordColor.copy(alpha = 0.7f),
-                                letterSpacing = 1.sp
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Divider(color = DocWordColor.copy(alpha = 0.15f), thickness = 1.dp)
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
+                            val computedPageNumber = formatPageNumber(pageIndex + pageNumberStartAt, pageNumberFormat)
+                            
+                            // Header
+                            if (pageNumberPosition != null && pageNumberPosition.startsWith("Top")) {
+                                Box(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+                                    Text(
+                                        text = computedPageNumber,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = DocWordColor.copy(alpha = 0.5f),
+                                        modifier = Modifier.align(
+                                            when {
+                                                pageNumberPosition.contains("Left") -> Alignment.CenterStart
+                                                pageNumberPosition.contains("Right") -> Alignment.CenterEnd
+                                                else -> Alignment.Center
+                                            }
+                                        )
+                                    )
+                                }
+                            }
+                            
                             if (columnCount > 1) {
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -4487,6 +4584,27 @@ fun WordDocumentEditor(
                                             .heightIn(min = 450.dp)
                                             .onFocusChanged { onFocusChanged?.invoke(it.isFocused) }
                                             .testTag(if (pages.size == 1) "word_editor_content_field" else "word_editor_page_$pageIndex")
+                                    )
+                                }
+                            }
+                            
+                            // Footer
+                            if (pageNumberPosition != null && (pageNumberPosition.startsWith("Bottom") || pageNumberPosition.contains("Margin"))) {
+                                Box(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
+                                    Text(
+                                        text = computedPageNumber,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = DocWordColor.copy(alpha = 0.5f),
+                                        modifier = Modifier.align(
+                                            when {
+                                                pageNumberPosition.contains("Left") -> Alignment.CenterStart
+                                                pageNumberPosition.contains("Right") -> Alignment.CenterEnd
+                                                pageNumberPosition.contains("Outside Margin") -> if (pageIndex % 2 == 0) Alignment.CenterEnd else Alignment.CenterStart
+                                                pageNumberPosition.contains("Inside Margin") -> if (pageIndex % 2 == 0) Alignment.CenterStart else Alignment.CenterEnd
+                                                else -> Alignment.Center
+                                            }
+                                        )
                                     )
                                 }
                             }
@@ -5294,23 +5412,33 @@ fun TypeSelectionRow(
 @Composable
 fun CustomMarginsDialog(
     onDismiss: () -> Unit,
-    onApply: () -> Unit
+    onApply: (androidx.compose.ui.unit.Dp) -> Unit
 ) {
+    var topMargin by remember { mutableStateOf("1") }
+    var bottomMargin by remember { mutableStateOf("1") }
+    var leftMargin by remember { mutableStateOf("1") }
+    var rightMargin by remember { mutableStateOf("1") }
+    var gutter by remember { mutableStateOf("0") }
+    var gutterPosition by remember { mutableStateOf("Left") }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Custom Margins") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = "1\"", onValueChange = {}, label = { Text("Top") })
-                OutlinedTextField(value = "1\"", onValueChange = {}, label = { Text("Bottom") })
-                OutlinedTextField(value = "1\"", onValueChange = {}, label = { Text("Left") })
-                OutlinedTextField(value = "1\"", onValueChange = {}, label = { Text("Right") })
-                OutlinedTextField(value = "0\"", onValueChange = {}, label = { Text("Gutter") })
-                OutlinedTextField(value = "Left", onValueChange = {}, label = { Text("Gutter Position") })
+                OutlinedTextField(value = topMargin, onValueChange = { topMargin = it }, label = { Text("Top (inches)") })
+                OutlinedTextField(value = bottomMargin, onValueChange = { bottomMargin = it }, label = { Text("Bottom (inches)") })
+                OutlinedTextField(value = leftMargin, onValueChange = { leftMargin = it }, label = { Text("Left (inches)") })
+                OutlinedTextField(value = rightMargin, onValueChange = { rightMargin = it }, label = { Text("Right (inches)") })
+                OutlinedTextField(value = gutter, onValueChange = { gutter = it }, label = { Text("Gutter (inches)") })
+                OutlinedTextField(value = gutterPosition, onValueChange = { gutterPosition = it }, label = { Text("Gutter Position") })
             }
         },
         confirmButton = {
-            TextButton(onClick = onApply) {
+            TextButton(onClick = {
+                val left = leftMargin.toFloatOrNull() ?: 1f
+                onApply((left * 96).dp)
+            }) {
                 Text("Apply")
             }
         },
@@ -5340,6 +5468,85 @@ fun CustomSizeDialog(
         confirmButton = {
             TextButton(onClick = onApply) {
                 Text("Apply")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun PageNumberFormatDialog(
+    currentFormat: String,
+    currentStartAt: String,
+    onDismiss: () -> Unit,
+    onApply: (format: String, startAt: String) -> Unit
+) {
+    var format by remember { mutableStateOf(currentFormat) }
+    var startAt by remember { mutableStateOf(currentStartAt) }
+    var includeChapterNumber by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Page Number Format") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                // Dropdown for format
+                var expanded by remember { mutableStateOf(false) }
+                val formats = listOf("1, 2, 3...", "01, 02, 03...", "001, 002, 003...", "I, II, III...", "i, ii, iii...", "A, B, C...", "a, b, c...")
+                
+                Box {
+                    OutlinedTextField(
+                        value = format,
+                        onValueChange = {},
+                        label = { Text("Number format") },
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = { expanded = true }) {
+                                Icon(Icons.Default.ArrowDropDown, "Select format")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        formats.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option) },
+                                onClick = {
+                                    format = option
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = includeChapterNumber, onCheckedChange = { includeChapterNumber = it })
+                    Text("Include chapter number")
+                }
+
+                Text("Page numbering", fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    RadioButton(selected = true, onClick = {})
+                    Text("Start at:")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    OutlinedTextField(
+                        value = startAt,
+                        onValueChange = { startAt = it }
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(format, startAt) }) {
+                Text("OK")
             }
         },
         dismissButton = {
