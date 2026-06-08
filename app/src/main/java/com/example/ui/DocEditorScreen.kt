@@ -22,6 +22,13 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlin.text.RegexOption
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.animation.core.spring
@@ -468,6 +477,7 @@ data class RibbonTool(
     val category: String,
     val tab: String,
     val actionId: String,
+    val hasDropdown: Boolean = false,
     val onClick: () -> Unit = {}
 )
 
@@ -478,6 +488,8 @@ fun RibbonToolCard(
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     Card(
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
@@ -487,52 +499,79 @@ fun RibbonToolCard(
             .fillMaxWidth()
             .height(56.dp)
             .combinedClickable(
-                onClick = { tool.onClick() },
+                onClick = { 
+                    if (tool.hasDropdown) expanded = true 
+                    else tool.onClick() 
+                },
                 onDoubleClick = { tool.onClick() },
                 onLongClick = { tool.onClick() }
             )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
+        Box {
+            Row(
                 modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.White),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = tool.icon,
-                    contentDescription = tool.title,
-                    tint = if (isDarkTheme) Color.White else Color.Black,
-                    modifier = Modifier.size(16.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = tool.icon,
+                        contentDescription = tool.title,
+                        tint = if (isDarkTheme) Color.White else Color.Black,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = tool.title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = if (isDarkTheme) Color.White else Color.Black
+                    )
+                    Text(
+                        text = tool.description,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = Color.Gray
+                    )
+                }
+                if (tool.hasDropdown) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Dropdown Options",
+                        tint = if (isDarkTheme) Color.LightGray else Color.DarkGray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(6.dp))
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = tool.title,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = if (isDarkTheme) Color.White else Color.Black
-                )
-                Text(
-                    text = tool.description,
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Normal,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = Color.Gray
-                )
+            if (tool.hasDropdown) {
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("More Options...", fontSize = 12.sp) },
+                        onClick = {
+                            expanded = false
+                            tool.onClick()
+                        }
+                    )
+                }
             }
         }
     }
@@ -654,143 +693,88 @@ fun getRibbonTools(
         ),
 
         // --- INSERT TAB TOOLS ---
-        RibbonTool(
-            id = "cover_page",
-            title = "Cover Page",
-            description = "Prepend title portfolio card",
-            icon = Icons.Default.Person,
-            category = "Pages Layout Addition",
-            tab = "Insert",
-            actionId = "cover_page"
-        ),
-        RibbonTool(
-            id = "blank_page",
-            title = "Blank Space",
-            description = "Append blank line breaks",
-            icon = Icons.Default.AccountBox,
-            category = "Pages Layout Addition",
-            tab = "Insert",
-            actionId = "blank_page"
-        ),
-        RibbonTool(
-            id = "page_break",
-            title = "Page Break",
-            description = "Append structural separator rule",
-            icon = Icons.Default.Menu,
-            category = "Pages Layout Addition",
-            tab = "Insert",
-            actionId = "page_break"
-        ),
-        RibbonTool(
-            id = "insert_table",
-            title = "Table",
-            description = "Add sample markdown matrix block",
-            icon = Icons.Default.Build,
-            category = "Tables & Layout Units",
-            tab = "Insert",
-            actionId = "insert_table"
-        ),
-        RibbonTool(
-            id = "pictures",
-            title = "Pictures",
-            description = "Emplace scenic mockup vector image",
-            icon = Icons.Default.Share,
-            category = "Illustrations & Media",
-            tab = "Insert",
-            actionId = "pictures"
-        ),
-        RibbonTool(
-            id = "shapes",
-            title = "Shapes",
-            description = "Apply interactive vector cylinders",
-            icon = Icons.Default.Star,
-            category = "Illustrations & Media",
-            tab = "Insert",
-            actionId = "shapes"
-        ),
-        RibbonTool(
-            id = "icons",
-            title = "Icons Badge",
-            description = "Insert status star banner element",
-            icon = Icons.Default.Favorite,
-            category = "Illustrations & Media",
-            tab = "Insert",
-            actionId = "icons"
-        ),
+        // 1. Pages Group
+        RibbonTool(id = "cover_page", title = "Cover Page", description = "Inserts a pre-designed cover page template", icon = Icons.Default.Person, category = "Pages", tab = "Insert", actionId = "cover_page"),
+        RibbonTool(id = "blank_page", title = "Blank Page", description = "Inserts a new blank page into the document", icon = Icons.Default.Add, category = "Pages", tab = "Insert", actionId = "blank_page"),
+        RibbonTool(id = "page_break", title = "Page Break", description = "Forces all following content onto the next page", icon = Icons.Default.Menu, category = "Pages", tab = "Insert", actionId = "page_break"),
+        RibbonTool(id = "insert_page_before", title = "Insert Page Before", description = "Inserts a blank page before the current page", icon = Icons.Default.KeyboardArrowUp, category = "Pages", tab = "Insert", actionId = "insert_page_before"),
+        RibbonTool(id = "insert_page_after", title = "Insert Page After", description = "Inserts a blank page after the current page", icon = Icons.Default.KeyboardArrowDown, category = "Pages", tab = "Insert", actionId = "insert_page_after"),
+        RibbonTool(id = "section_break", title = "Section Break", description = "Inserts a section break", icon = Icons.Default.List, category = "Pages", tab = "Insert", actionId = "section_break"),
+
+        // 2. Tables Group
+        RibbonTool(id = "insert_table", title = "Insert Table", description = "Insert Table", icon = Icons.Default.List, category = "Tables", tab = "Insert", actionId = "insert_table"),
+        RibbonTool(id = "draw_table", title = "Draw Table", description = "Draw Table", icon = Icons.Default.Create, category = "Tables", tab = "Insert", actionId = "draw_table"),
+        RibbonTool(id = "quick_tables", title = "Quick Tables", description = "Quick Tables", icon = Icons.Default.AddCircle, category = "Tables", tab = "Insert", actionId = "quick_tables"),
+        RibbonTool(id = "excel_style_tables", title = "Excel Tables", description = "Excel-style Tables", icon = Icons.Default.Menu, category = "Tables", tab = "Insert", actionId = "excel_style_tables"),
+        RibbonTool(id = "merge_cells", title = "Merge Cells", description = "Merge Cells", icon = Icons.Default.Add, category = "Tables", tab = "Insert", actionId = "merge_cells"),
+        RibbonTool(id = "split_cells", title = "Split Cells", description = "Split Cells", icon = Icons.Default.Clear, category = "Tables", tab = "Insert", actionId = "split_cells"),
+
+        // 3. Illustrations Group
+        RibbonTool(id = "pic_gallery", title = "Gallery Photo", description = "Gallery Photo", icon = Icons.Default.Face, category = "Illustrations", tab = "Insert", actionId = "pic_gallery"),
+        RibbonTool(id = "pic_camera", title = "Camera Capture", description = "Camera Capture", icon = Icons.Default.AccountBox, category = "Illustrations", tab = "Insert", actionId = "pic_camera"),
+        RibbonTool(id = "pic_android_file_picker", title = "File Picker", description = "Android File Picker", icon = Icons.Default.List, category = "Illustrations", tab = "Insert", actionId = "pic_android_file_picker"),
+        RibbonTool(id = "pic_google_photos", title = "Google Photos", description = "Google Photos", icon = Icons.Default.Face, category = "Illustrations", tab = "Insert", actionId = "pic_google_photos"),
+        RibbonTool(id = "pic_google_drive", title = "Google Drive", description = "Google Drive", icon = Icons.Default.Add, category = "Illustrations", tab = "Insert", actionId = "pic_google_drive"),
+        RibbonTool(id = "pic_onedrive", title = "OneDrive", description = "OneDrive", icon = Icons.Default.Search, category = "Illustrations", tab = "Insert", actionId = "pic_onedrive"),
+        RibbonTool(id = "pic_dropbox", title = "Dropbox", description = "Dropbox", icon = Icons.Default.Share, category = "Illustrations", tab = "Insert", actionId = "pic_dropbox"),
+        RibbonTool(id = "clip_art", title = "Clip Art", description = "Clip Art", icon = Icons.Default.Favorite, category = "Illustrations", tab = "Insert", actionId = "clip_art"),
+        RibbonTool(id = "shapes", title = "Shapes", description = "Shapes", icon = Icons.Default.Star, category = "Illustrations", tab = "Insert", actionId = "shapes"),
+        RibbonTool(id = "smartart", title = "SmartArt", description = "SmartArt", icon = Icons.Default.Info, category = "Illustrations", tab = "Insert", actionId = "smartart"),
+        RibbonTool(id = "chart", title = "Chart", description = "Chart", icon = Icons.Default.List, category = "Illustrations", tab = "Insert", actionId = "chart"),
+        RibbonTool(id = "screenshot", title = "Screenshot", description = "Screenshot", icon = Icons.Default.Search, category = "Illustrations", tab = "Insert", actionId = "screenshot"),
+        RibbonTool(id = "icons_ill", title = "Icons", description = "Icons", icon = Icons.Default.Star, category = "Illustrations", tab = "Insert", actionId = "icons_ill"),
+        RibbonTool(id = "qr_code", title = "QR Code", description = "QR Code", icon = Icons.Default.Build, category = "Illustrations", tab = "Insert", actionId = "qr_code"),
+        RibbonTool(id = "barcode", title = "Barcode", description = "Barcode", icon = Icons.Default.Menu, category = "Illustrations", tab = "Insert", actionId = "barcode"),
+        RibbonTool(id = "ai_generated_image", title = "AI Image", description = "AI Generated Image", icon = Icons.Default.Face, category = "Illustrations", tab = "Insert", actionId = "ai_generated_image"),
+
+        // 4. Links Group
+        RibbonTool(id = "hyperlink", title = "Hyperlink", description = "Hyperlink", icon = Icons.Default.Share, category = "Links", tab = "Insert", actionId = "hyperlink"),
+        RibbonTool(id = "bookmark", title = "Bookmark", description = "Bookmark", icon = Icons.Default.Star, category = "Links", tab = "Insert", actionId = "bookmark"),
+        RibbonTool(id = "cross_reference", title = "Cross-reference", description = "Cross-reference", icon = Icons.Default.Refresh, category = "Links", tab = "Insert", actionId = "cross_reference"),
+
+        // 5. Header & Footer Group
+        RibbonTool(id = "header", title = "Header", description = "Header", icon = Icons.Default.KeyboardArrowUp, category = "Header & Footer", tab = "Insert", actionId = "header"),
+        RibbonTool(id = "footer", title = "Footer", description = "Footer", icon = Icons.Default.KeyboardArrowDown, category = "Header & Footer", tab = "Insert", actionId = "footer"),
+        RibbonTool(id = "page_number", title = "Page Number", description = "Page Number", icon = Icons.Default.List, category = "Header & Footer", tab = "Insert", actionId = "page_number"),
+
+        // 6. Text Group
+        RibbonTool(id = "text_box", title = "Text Box", description = "Text Box", icon = Icons.Default.Create, category = "Text", tab = "Insert", actionId = "text_box"),
+        RibbonTool(id = "quick_parts", title = "Quick Parts", description = "Quick Parts", icon = Icons.Default.Build, category = "Text", tab = "Insert", actionId = "quick_parts"),
+        RibbonTool(id = "wordart", title = "WordArt", description = "WordArt", icon = Icons.Default.Star, category = "Text", tab = "Insert", actionId = "wordart"),
+        RibbonTool(id = "drop_cap", title = "Drop Cap", description = "Drop Cap", icon = Icons.Default.List, category = "Text", tab = "Insert", actionId = "drop_cap"),
+        RibbonTool(id = "date_time", title = "Date & Time", description = "Date & Time", icon = Icons.Default.Info, category = "Text", tab = "Insert", actionId = "date_time"),
+        RibbonTool(id = "object_inserted", title = "Object", description = "Object", icon = Icons.Default.Build, category = "Text", tab = "Insert", actionId = "object_inserted"),
+        RibbonTool(id = "watermark", title = "Watermark", description = "Watermark", icon = Icons.Default.Info, category = "Text", tab = "Insert", actionId = "watermark"),
+        RibbonTool(id = "signature", title = "Signature", description = "Signature", icon = Icons.Default.Edit, category = "Text", tab = "Insert", actionId = "signature"),
+        RibbonTool(id = "comment_box", title = "Comment Box", description = "Comment Box", icon = Icons.Default.Email, category = "Text", tab = "Insert", actionId = "comment_box"),
+
+        // 7. Symbols Group
+        RibbonTool(id = "equation", title = "Equation", description = "Equation", icon = Icons.Default.Info, category = "Symbols", tab = "Insert", actionId = "equation"),
+        RibbonTool(id = "symbol", title = "Symbol", description = "Symbol", icon = Icons.Default.Star, category = "Symbols", tab = "Insert", actionId = "symbol"),
+
+        // 8. Signature Group
+        RibbonTool(id = "formal_signature_line", title = "Signature Line", description = "Signature Line", icon = Icons.Default.Edit, category = "Signature", tab = "Insert", actionId = "formal_signature_line"),
 
         // --- LAYOUT TAB TOOLS ---
-        RibbonTool(
-            id = "margins_normal",
-            title = "Normal Margins",
-            description = "Standard 24dp paper padding set",
-            icon = Icons.Default.Settings,
-            category = "Page Margins Setup",
-            tab = "Layout",
-            actionId = "margins_normal"
-        ),
-        RibbonTool(
-            id = "margins_narrow",
-            title = "Narrow Margins",
-            description = "Tight 8dp space bounding padding",
-            icon = Icons.Default.Lock,
-            category = "Page Margins Setup",
-            tab = "Layout",
-            actionId = "margins_narrow"
-        ),
-        RibbonTool(
-            id = "margins_wide",
-            title = "Wide Margins",
-            description = "Spacious 48dp borders layout padding",
-            icon = Icons.Default.Settings,
-            category = "Page Margins Setup",
-            tab = "Layout",
-            actionId = "margins_wide"
-        ),
-        RibbonTool(
-            id = "portrait",
-            title = "Portrait Mode",
-            description = "Toggle vertical 680dp constraint",
-            icon = Icons.Default.Person,
-            category = "Page Orientation Config",
-            tab = "Layout",
-            actionId = "portrait"
-        ),
-        RibbonTool(
-            id = "landscape",
-            title = "Landscape Mode",
-            description = "Scale horizontal 1000dp canvas",
-            icon = Icons.Default.Share,
-            category = "Page Orientation Config",
-            tab = "Layout",
-            actionId = "landscape"
-        ),
-        RibbonTool(
-            id = "col_1",
-            title = "One Column",
-            description = "Standard full horizontal note width",
-            icon = Icons.Default.Menu,
-            category = "Multi Column Columns",
-            tab = "Layout",
-            actionId = "col_1"
-        ),
-        RibbonTool(
-            id = "col_2",
-            title = "Two Columns",
-            description = "Separate note lines into 2 panes",
-            icon = Icons.Default.Build,
-            category = "Multi Column Columns",
-            tab = "Layout",
-            actionId = "col_2"
-        ),
-        RibbonTool(
-            id = "col_3",
-            title = "Three Columns",
-            description = "Maximize space in 3 divisions",
-            icon = Icons.Default.MoreVert,
-            category = "Multi Column Columns",
-            tab = "Layout",
-            actionId = "col_3"
-        ),
+        // 1. Page Setup Group
+        RibbonTool(id = "margins", title = "Margins", description = "Set Page Margins", icon = Icons.Default.Settings, category = "Page Setup", tab = "Layout", actionId = "margins", hasDropdown = true),
+        RibbonTool(id = "orientation", title = "Orientation", description = "Page Orientation", icon = Icons.Default.Refresh, category = "Page Setup", tab = "Layout", actionId = "orientation", hasDropdown = true),
+        RibbonTool(id = "size", title = "Size", description = "Page Size", icon = Icons.Default.Settings, category = "Page Setup", tab = "Layout", actionId = "size", hasDropdown = true),
+        RibbonTool(id = "columns", title = "Columns", description = "Page Columns", icon = Icons.Default.Menu, category = "Page Setup", tab = "Layout", actionId = "columns", hasDropdown = true),
+        RibbonTool(id = "breaks", title = "Breaks", description = "Page Breaks", icon = Icons.Default.Menu, category = "Page Setup", tab = "Layout", actionId = "breaks", hasDropdown = true),
+        RibbonTool(id = "line_numbers", title = "Line Numbers", description = "Line Numbers", icon = Icons.Default.Menu, category = "Page Setup", tab = "Layout", actionId = "line_numbers", hasDropdown = true),
+        RibbonTool(id = "hyphenation", title = "Hyphenation", description = "Hyphenation", icon = Icons.Default.Menu, category = "Page Setup", tab = "Layout", actionId = "hyphenation", hasDropdown = true),
+
+        // 2. Themes Group
+        RibbonTool(id = "theme_apply", title = "Themes", description = "Document Themes", icon = Icons.Default.Star, category = "Themes", tab = "Layout", actionId = "theme_apply", hasDropdown = true),
+        RibbonTool(id = "theme_colors", title = "Colors", description = "Theme Colors", icon = Icons.Default.AccountBox, category = "Themes", tab = "Layout", actionId = "theme_colors", hasDropdown = true),
+        RibbonTool(id = "theme_fonts", title = "Fonts", description = "Theme Fonts", icon = Icons.Default.Menu, category = "Themes", tab = "Layout", actionId = "theme_fonts", hasDropdown = true),
+        RibbonTool(id = "theme_effects", title = "Effects", description = "Theme Effects", icon = Icons.Default.Build, category = "Themes", tab = "Layout", actionId = "theme_effects", hasDropdown = true),
+
+        // 3. Page Background Group
+        RibbonTool(id = "watermark", title = "Watermark", description = "Page Watermark", icon = Icons.Default.Info, category = "Page Background", tab = "Layout", actionId = "watermark", hasDropdown = true),
+        RibbonTool(id = "page_color", title = "Page Color", description = "Page Background Color", icon = Icons.Default.Create, category = "Page Background", tab = "Layout", actionId = "page_color", hasDropdown = true),
+        RibbonTool(id = "page_borders", title = "Page Borders", description = "Page Borders", icon = Icons.Default.KeyboardArrowDown, category = "Page Background", tab = "Layout", actionId = "page_borders", hasDropdown = false),
 
         // --- REFERENCES TAB TOOLS ---
         RibbonTool(
@@ -927,7 +911,10 @@ fun executeRibbonAction(
     snackbarState: androidx.compose.material3.SnackbarHostState,
     tts: android.speech.tts.TextToSpeech?,
     isSpeaking: Boolean,
-    onSpeakStateChange: (Boolean) -> Unit
+    onSpeakStateChange: (Boolean) -> Unit,
+    textFieldValue: TextFieldValue? = null,
+    onTextFieldValueChange: ((TextFieldValue) -> Unit)? = null,
+    lastSelection: TextRange? = null
 ) {
     fun showToast(msg: String) {
         snackbarScope.launch {
@@ -938,19 +925,60 @@ fun executeRibbonAction(
         }
     }
 
+    val applyFormatting = { prefix: String, suffix: String, placeholder: String ->
+        if (textFieldValue != null && onTextFieldValueChange != null) {
+            val selection = lastSelection ?: textFieldValue.selection
+            val text = textFieldValue.text
+            if (!selection.collapsed) {
+                val selectedStr = text.substring(selection.start, selection.end)
+                val formatted = prefix + selectedStr + suffix
+                val newText = text.replaceRange(selection.start, selection.end, formatted)
+                val newSelection = TextRange(selection.start + prefix.length, selection.start + prefix.length + selectedStr.length)
+                onTextFieldValueChange(TextFieldValue(text = newText, selection = newSelection))
+            } else {
+                val insertText = prefix + placeholder + suffix
+                val newText = text.replaceRange(selection.start, selection.start, insertText)
+                val newSelection = TextRange(selection.start + prefix.length, selection.start + prefix.length + placeholder.length)
+                onTextFieldValueChange(TextFieldValue(text = newText, selection = newSelection))
+            }
+        } else {
+            onContentChange(draftContent + " " + prefix + placeholder + suffix)
+        }
+    }
+
     when (actionId) {
         // --- HOME ACTIONS ---
         "bold" -> {
-            onContentChange(draftContent + " **Bold Text**")
+            applyFormatting("**", "**", "Bold Text")
             showToast("Bold formatting applied to content")
         }
         "italic" -> {
-            onContentChange(draftContent + " *Italic Text*")
+            applyFormatting("*", "*", "Italic Text")
             showToast("Italic formatting applied to content")
         }
         "underline" -> {
-            onContentChange(draftContent + " <u>Underline Text</u>")
+            applyFormatting("<u>", "</u>", "Underline Text")
             showToast("Underline formatting applied to content")
+        }
+        "strikethrough" -> {
+            applyFormatting("~~", "~~", "Strikethrough text")
+            showToast("Strikethrough formatting applied to content")
+        }
+        "subscript" -> {
+            applyFormatting("<sub>", "</sub>", "Subscript text")
+            showToast("Subscript formatting applied to content")
+        }
+        "superscript" -> {
+            applyFormatting("<sup>", "</sup>", "Superscript text")
+            showToast("Superscript formatting applied to content")
+        }
+        "color" -> {
+            applyFormatting("<font color=\"#3B82F6\">", "</font>", "Colored Text")
+            showToast("Font color changed to primary accent")
+        }
+        "highlight" -> {
+            applyFormatting("<mark>", "</mark>", "Highlighted Text")
+            showToast("Text highlight applied")
         }
         "align_left" -> {
             onAlignmentChange(TextAlign.Left)
@@ -985,12 +1013,56 @@ fun executeRibbonAction(
             showToast("Font text size decreased to 11sp")
         }
         "clear_format" -> {
-            val cleaned = draftContent
-                .replace("**", "")
-                .replace("*", "")
-                .replace("<u>", "")
-                .replace("</u>", "")
-            onContentChange(cleaned)
+            if (textFieldValue != null && onTextFieldValueChange != null) {
+                val selection = lastSelection ?: textFieldValue.selection
+                val text = textFieldValue.text
+                if (!selection.collapsed) {
+                    val selectedStr = text.substring(selection.start, selection.end)
+                    val cleaned = selectedStr
+                        .replace("**", "")
+                        .replace("*", "")
+                        .replace("<u>", "")
+                        .replace("</u>", "")
+                        .replace("~~", "")
+                        .replace("<sub>", "")
+                        .replace("</sub>", "")
+                        .replace("<sup>", "")
+                        .replace("</sup>", "")
+                        .replace("<font[^>]*>".toRegex(), "")
+                        .replace("</font>", "")
+                        .replace("<span[^>]*>".toRegex(), "")
+                        .replace("</span>", "")
+                        .replace("<mark>", "")
+                        .replace("</mark>", "")
+                    val newText = text.replaceRange(selection.start, selection.end, cleaned)
+                    onTextFieldValueChange(TextFieldValue(text = newText, selection = TextRange(selection.start, selection.start + cleaned.length)))
+                } else {
+                    val cleaned = text
+                        .replace("**", "")
+                        .replace("*", "")
+                        .replace("<u>", "")
+                        .replace("</u>", "")
+                        .replace("~~", "")
+                        .replace("<sub>", "")
+                        .replace("</sub>", "")
+                        .replace("<sup>", "")
+                        .replace("</sup>", "")
+                        .replace("<font[^>]*>".toRegex(), "")
+                        .replace("</font>", "")
+                        .replace("<span[^>]*>".toRegex(), "")
+                        .replace("</span>", "")
+                        .replace("<mark>", "")
+                        .replace("</mark>", "")
+                    onTextFieldValueChange(TextFieldValue(text = cleaned, selection = TextRange(cleaned.length)))
+                }
+            } else {
+                val cleaned = draftContent
+                    .replace("**", "")
+                    .replace("*", "")
+                    .replace("<u>", "")
+                    .replace("</u>", "")
+                onContentChange(cleaned)
+            }
             onAlignmentChange(TextAlign.Left)
             onFontSizeChange(14.sp)
             showToast("All text styling and layout formatting tags cleared")
@@ -1416,6 +1488,32 @@ fun WorkspacePane(
         var fontSize by remember { mutableStateOf(16.sp) }
         var isLandscape by remember { mutableStateOf(false) }
 
+        var editorTextFieldValue by remember(selectedDoc.id) {
+            mutableStateOf(TextFieldValue(text = draftContent, selection = TextRange(draftContent.length)))
+        }
+
+        var lastSelection by remember(selectedDoc.id) {
+            mutableStateOf(TextRange(draftContent.length))
+        }
+
+        var isEditorFocused by remember { mutableStateOf(false) }
+
+        LaunchedEffect(draftContent) {
+            if (editorTextFieldValue.text != draftContent) {
+                editorTextFieldValue = editorTextFieldValue.copy(
+                    text = draftContent,
+                    selection = TextRange(
+                        editorTextFieldValue.selection.start.coerceIn(0, draftContent.length),
+                        editorTextFieldValue.selection.end.coerceIn(0, draftContent.length)
+                    )
+                )
+                lastSelection = TextRange(
+                    lastSelection.start.coerceIn(0, draftContent.length),
+                    lastSelection.end.coerceIn(0, draftContent.length)
+                )
+            }
+        }
+
         var activeRibbonTab by remember { mutableStateOf("Home") }
         var isRibbonExpanded by remember { mutableStateOf(true) }
         var ribbonHeightDp by remember { mutableStateOf(300.dp) }
@@ -1504,7 +1602,18 @@ fun WorkspacePane(
                                 textAlignment = textAlignment,
                                 fontSize = fontSize,
                                 isLandscape = isLandscape,
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize(),
+                                textFieldValue = editorTextFieldValue,
+                                onTextFieldValueChange = { newVal ->
+                                    editorTextFieldValue = newVal
+                                    if (isEditorFocused) {
+                                        lastSelection = newVal.selection
+                                    }
+                                    if (newVal.text != draftContent) {
+                                        onContentChange(newVal.text)
+                                    }
+                                },
+                                onFocusChanged = { isEditorFocused = it }
                             )
                         }
                         "sheet" -> SpreadsheetEditor(
@@ -1668,7 +1777,18 @@ fun WorkspacePane(
                                         snackbarState = snackbarHostState,
                                         tts = tts,
                                         isSpeaking = isSpeaking,
-                                        onSpeakStateChange = { isSpeaking = it }
+                                        onSpeakStateChange = { isSpeaking = it },
+                                        textFieldValue = editorTextFieldValue,
+                                        onTextFieldValueChange = { newVal ->
+                                            editorTextFieldValue = newVal
+                                            if (isEditorFocused) {
+                                                lastSelection = newVal.selection
+                                            }
+                                            if (newVal.text != draftContent) {
+                                                onContentChange(newVal.text)
+                                            }
+                                        },
+                                        lastSelection = lastSelection
                                     )
                                 }.filter { tool ->
                                     (tool.tab.equals(activeRibbonTab, ignoreCase = true) || ribbonSearchQuery.isNotEmpty()) &&
@@ -1715,7 +1835,18 @@ fun WorkspacePane(
                                             snackbarState = snackbarHostState,
                                             tts = tts,
                                             isSpeaking = isSpeaking,
-                                            onSpeakStateChange = { isSpeaking = it }
+                                            onSpeakStateChange = { isSpeaking = it },
+                                            textFieldValue = editorTextFieldValue,
+                                            onTextFieldValueChange = { newVal ->
+                                                editorTextFieldValue = newVal
+                                                if (isEditorFocused) {
+                                                    lastSelection = newVal.selection
+                                                }
+                                                if (newVal.text != draftContent) {
+                                                    onContentChange(newVal.text)
+                                                }
+                                            },
+                                            lastSelection = lastSelection
                                         )
                                     }
 
@@ -1748,7 +1879,26 @@ fun WorkspacePane(
                                                                 options = listOf("Default", "Aptos", "Calibri", "Arial", "Times New Roman", "Courier New", "Georgia", "Space Grotesk", "JetBrains Mono"),
                                                                 onSelect = {
                                                                     activeFontFamily = it
-                                                                    onAction("clear_format")
+                                                                    if (it != "Default") {
+                                                                        val prefix = "<font face=\"$it\">"
+                                                                        val suffix = "</font>"
+                                                                        val selection = lastSelection
+                                                                        val text = editorTextFieldValue.text
+                                                                        if (!selection.collapsed) {
+                                                                            val selectedStr = text.substring(selection.start, selection.end)
+                                                                            val formatted = prefix + selectedStr + suffix
+                                                                            val newText = text.replaceRange(selection.start, selection.end, formatted)
+                                                                            editorTextFieldValue = TextFieldValue(text = newText, selection = TextRange(selection.start, selection.start + formatted.length))
+                                                                            onContentChange(newText)
+                                                                        } else {
+                                                                            val insertText = prefix + suffix
+                                                                            val newText = text.replaceRange(selection.start, selection.start, insertText)
+                                                                            editorTextFieldValue = TextFieldValue(text = newText, selection = TextRange(selection.start + prefix.length))
+                                                                            onContentChange(newText)
+                                                                        }
+                                                                    } else {
+                                                                        onAction("clear_format")
+                                                                    }
                                                                     coroutineScope.launch {
                                                                         snackbarHostState.showSnackbar("Font family changed to: $it")
                                                                     }
@@ -1761,9 +1911,24 @@ fun WorkspacePane(
                                                                 options = listOf("9", "10", "11", "12", "14", "16", "18", "20", "24", "28", "32", "48"),
                                                                 onSelect = {
                                                                     activeFontSize = it
-                                                                    onAction("clear_format")
                                                                     val num = it.toIntOrNull() ?: 16
                                                                     fontSize = num.sp
+                                                                    val prefix = "<font size=\"$it\">"
+                                                                    val suffix = "</font>"
+                                                                    val selection = lastSelection
+                                                                    val text = editorTextFieldValue.text
+                                                                    if (!selection.collapsed) {
+                                                                        val selectedStr = text.substring(selection.start, selection.end)
+                                                                        val formatted = prefix + selectedStr + suffix
+                                                                        val newText = text.replaceRange(selection.start, selection.end, formatted)
+                                                                        editorTextFieldValue = TextFieldValue(text = newText, selection = TextRange(selection.start, selection.start + formatted.length))
+                                                                        onContentChange(newText)
+                                                                    } else {
+                                                                        val insertText = prefix + suffix
+                                                                        val newText = text.replaceRange(selection.start, selection.start, insertText)
+                                                                        editorTextFieldValue = TextFieldValue(text = newText, selection = TextRange(selection.start + prefix.length))
+                                                                        onContentChange(newText)
+                                                                    }
                                                                     coroutineScope.launch {
                                                                         snackbarHostState.showSnackbar("Font size set to: ${num}sp")
                                                                     }
@@ -1808,15 +1973,32 @@ fun WorkspacePane(
                                                             RibbonIconButton(
                                                                 contentDescription = "Change Case",
                                                                 onClick = {
-                                                                    val currentContent = draftContent
-                                                                    val updatedContent = if (currentContent == currentContent.uppercase()) {
-                                                                        currentContent.lowercase()
-                                                                    } else if (currentContent == currentContent.lowercase()) {
-                                                                        currentContent.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                                                    val selection = editorTextFieldValue.selection
+                                                                    val text = editorTextFieldValue.text
+                                                                    if (!selection.collapsed) {
+                                                                        val selectedStr = text.substring(selection.start, selection.end)
+                                                                        val updatedStr = if (selectedStr == selectedStr.uppercase()) {
+                                                                            selectedStr.lowercase()
+                                                                        } else if (selectedStr == selectedStr.lowercase()) {
+                                                                            selectedStr.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                                                        } else {
+                                                                            selectedStr.uppercase()
+                                                                        }
+                                                                        val newText = text.replaceRange(selection.start, selection.end, updatedStr)
+                                                                        editorTextFieldValue = TextFieldValue(text = newText, selection = TextRange(selection.start, selection.start + updatedStr.length))
+                                                                        onContentChange(newText)
                                                                     } else {
-                                                                        currentContent.uppercase()
+                                                                        val currentContent = draftContent
+                                                                        val updatedContent = if (currentContent == currentContent.uppercase()) {
+                                                                            currentContent.lowercase()
+                                                                        } else if (currentContent == currentContent.lowercase()) {
+                                                                            currentContent.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                                                        } else {
+                                                                            currentContent.uppercase()
+                                                                        }
+                                                                        editorTextFieldValue = TextFieldValue(text = updatedContent, selection = TextRange(updatedContent.length))
+                                                                        onContentChange(updatedContent)
                                                                     }
-                                                                    onContentChange(updatedContent)
                                                                     coroutineScope.launch {
                                                                         snackbarHostState.showSnackbar("Changed text case formatting")
                                                                     }
@@ -2036,15 +2218,32 @@ fun WorkspacePane(
                                                                 icon = Icons.Default.Refresh,
                                                                 contentDescription = "Change Case",
                                                                 onClick = {
-                                                                    val currentContent = draftContent
-                                                                    val updatedContent = if (currentContent == currentContent.uppercase()) {
-                                                                        currentContent.lowercase()
-                                                                    } else if (currentContent == currentContent.lowercase()) {
-                                                                        currentContent.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                                                    val selection = editorTextFieldValue.selection
+                                                                    val text = editorTextFieldValue.text
+                                                                    if (!selection.collapsed) {
+                                                                        val selectedStr = text.substring(selection.start, selection.end)
+                                                                        val updatedStr = if (selectedStr == selectedStr.uppercase()) {
+                                                                            selectedStr.lowercase()
+                                                                        } else if (selectedStr == selectedStr.lowercase()) {
+                                                                            selectedStr.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                                                        } else {
+                                                                            selectedStr.uppercase()
+                                                                        }
+                                                                        val newText = text.replaceRange(selection.start, selection.end, updatedStr)
+                                                                        editorTextFieldValue = TextFieldValue(text = newText, selection = TextRange(selection.start, selection.start + updatedStr.length))
+                                                                        onContentChange(newText)
                                                                     } else {
-                                                                        currentContent.uppercase()
+                                                                        val currentContent = draftContent
+                                                                        val updatedContent = if (currentContent == currentContent.uppercase()) {
+                                                                            currentContent.lowercase()
+                                                                        } else if (currentContent == currentContent.lowercase()) {
+                                                                            currentContent.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                                                        } else {
+                                                                            currentContent.uppercase()
+                                                                        }
+                                                                        editorTextFieldValue = TextFieldValue(text = updatedContent, selection = TextRange(updatedContent.length))
+                                                                        onContentChange(updatedContent)
                                                                     }
-                                                                    onContentChange(updatedContent)
                                                                     coroutineScope.launch {
                                                                         snackbarHostState.showSnackbar("Changed text case formatting")
                                                                     }
@@ -3983,6 +4182,164 @@ fun WorkspaceMenuBar(
     }
 }
 
+class RichTextVisualTransformation(private val baseTagColor: Color) : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val rawText = text.text
+        val n = rawText.length
+        val isTagChar = BooleanArray(n) { false }
+
+        // Helper to mark tag characters
+        fun markTags(regex: Regex, contentGroupIndex: Int) {
+            regex.findAll(rawText).forEach { match ->
+                val range = match.range
+                val contentGroup = match.groups[contentGroupIndex]
+                val groupRange = contentGroup?.range
+                if (groupRange != null) {
+                    for (i in range.first until groupRange.first) {
+                        if (i in 0 until n) isTagChar[i] = true
+                    }
+                    for (i in (groupRange.last + 1)..range.last) {
+                        if (i in 0 until n) isTagChar[i] = true
+                    }
+                }
+            }
+        }
+
+        // Mark all tags (using DOTALL where appropriate to match across lines via inline (?s) flag)
+        markTags("(?s)\\*\\*(.*?)\\*\\*".toRegex(), 1)
+        markTags("(?<!\\*)\\*([^*\\n]+?)\\*(?!\\*)".toRegex(), 1)
+        markTags("(?s)(?i)<u>(.*?)</u>".toRegex(), 1)
+        markTags("(?s)~~(.*?)~~".toRegex(), 1)
+        markTags("(?s)(?i)<mark>(.*?)</mark>".toRegex(), 1)
+        markTags("(?s)(?i)<sub>(.*?)</sub>".toRegex(), 1)
+        markTags("(?s)(?i)<sup>(.*?)</sup>".toRegex(), 1)
+        markTags("(?s)(?i)<font\\s+color=\"([^\"]+)\"[^>]*>(.*?)</font>".toRegex(), 2)
+        markTags("(?s)(?i)<font\\s+size=\"(\\d+)\"[^>]*>(.*?)</font>".toRegex(), 2)
+        markTags("(?s)(?i)<font\\s+face=\"([^\"]+)\"[^>]*>(.*?)</font>".toRegex(), 2)
+
+        val cleanBuilder = java.lang.StringBuilder()
+        val originalToTransformed = IntArray(n + 1)
+        val transformedToOriginal = mutableListOf<Int>()
+
+        for (i in 0 until n) {
+            originalToTransformed[i] = cleanBuilder.length
+            if (!isTagChar[i]) {
+                cleanBuilder.append(rawText[i])
+                transformedToOriginal.add(i)
+            }
+        }
+        originalToTransformed[n] = cleanBuilder.length
+        transformedToOriginal.add(n)
+
+        val builder = AnnotatedString.Builder()
+        builder.append(cleanBuilder.toString())
+
+        fun applyStyle(regex: Regex, contentGroupIndex: Int, styleProvider: (MatchResult) -> SpanStyle) {
+            regex.findAll(rawText).forEach { match ->
+                val contentGroup = match.groups[contentGroupIndex]
+                val groupRange = contentGroup?.range
+                if (groupRange != null) {
+                    val startClean = originalToTransformed[groupRange.first]
+                    val endClean = originalToTransformed[groupRange.last + 1]
+                    if (startClean < endClean) {
+                        builder.addStyle(styleProvider(match), startClean, endClean)
+                    }
+                }
+            }
+        }
+
+        // Apply styles to clean range
+        // 1. Bold: **text**
+        applyStyle("(?s)\\*\\*(.*?)\\*\\*".toRegex(), 1) {
+            SpanStyle(fontWeight = FontWeight.Bold)
+        }
+
+        // 2. Italic: *text* (match single asterisk avoiding those part of double asterisks)
+        applyStyle("(?<!\\*)\\*([^*\\n]+?)\\*(?!\\*)".toRegex(), 1) {
+            SpanStyle(fontStyle = FontStyle.Italic)
+        }
+
+        // 3. Underline: <u>text</u>
+        applyStyle("(?s)(?i)<u>(.*?)</u>".toRegex(), 1) {
+            SpanStyle(textDecoration = TextDecoration.Underline)
+        }
+
+        // 4. Strikethrough: ~~text~~
+        applyStyle("(?s)~~(.*?)~~".toRegex(), 1) {
+            SpanStyle(textDecoration = TextDecoration.LineThrough)
+        }
+
+        // 5. Highlight: <mark>text</mark>
+        applyStyle("(?s)(?i)<mark>(.*?)</mark>".toRegex(), 1) {
+            SpanStyle(background = Color(0xFFFDE047).copy(alpha = 0.45f))
+        }
+
+        // 6. Subscript: <sub>text</sub>
+        applyStyle("(?s)(?i)<sub>(.*?)</sub>".toRegex(), 1) {
+            SpanStyle(
+                baselineShift = androidx.compose.ui.text.style.BaselineShift.Subscript,
+                fontSize = 11.sp
+            )
+        }
+
+        // 7. Superscript: <sup>text</sup>
+        applyStyle("(?s)(?i)<sup>(.*?)</sup>".toRegex(), 1) {
+            SpanStyle(
+                baselineShift = androidx.compose.ui.text.style.BaselineShift.Superscript,
+                fontSize = 11.sp
+            )
+        }
+
+        // 8. Font color: <font color="HEX">text</font>
+        applyStyle("(?s)(?i)<font\\s+color=\"([^\"]+)\"[^>]*>(.*?)</font>".toRegex(), 2) { match ->
+            val colorHex = match.groups[1]?.value ?: ""
+            val parsedColor = try {
+                Color(android.graphics.Color.parseColor(colorHex))
+            } catch (e: Exception) {
+                null
+            }
+            SpanStyle(color = parsedColor ?: Color.Unspecified)
+        }
+
+        // 9. Font size: <font size="SIZE">text</font>
+        applyStyle("(?s)(?i)<font\\s+size=\"(\\d+)\"[^>]*>(.*?)</font>".toRegex(), 2) { match ->
+            val sizeVal = match.groups[1]?.value?.toIntOrNull() ?: 16
+            SpanStyle(fontSize = sizeVal.sp)
+        }
+
+        // 10. Font face: <font face="FAMILY">text</font>
+        applyStyle("(?s)(?i)<font\\s+face=\"([^\"]+)\"[^>]*>(.*?)</font>".toRegex(), 2) { match ->
+            val faceName = match.groups[1]?.value ?: ""
+            val fontFamily = when (faceName) {
+                "Aptos" -> FontFamily.SansSerif
+                "Calibri" -> FontFamily.SansSerif
+                "Arial" -> FontFamily.SansSerif
+                "Times New Roman" -> FontFamily.Serif
+                "Courier New" -> FontFamily.Monospace
+                "Georgia" -> FontFamily.Serif
+                "Space Grotesk" -> FontFamily.SansSerif
+                "JetBrains Mono" -> FontFamily.Monospace
+                else -> null
+            }
+            SpanStyle(fontFamily = fontFamily ?: FontFamily.Default)
+        }
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                val clamped = offset.coerceIn(0, n)
+                return originalToTransformed[clamped]
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                val clamped = offset.coerceIn(0, cleanBuilder.length)
+                return transformedToOriginal[clamped]
+            }
+        }
+
+        return TransformedText(builder.toAnnotatedString(), offsetMapping)
+    }
+}
+
 // --- 1. JC WORD WRITER EDITOR ---
 @Composable
 fun WordDocumentEditor(
@@ -3995,7 +4352,10 @@ fun WordDocumentEditor(
     textAlignment: androidx.compose.ui.text.style.TextAlign,
     fontSize: androidx.compose.ui.unit.TextUnit,
     isLandscape: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    textFieldValue: TextFieldValue? = null,
+    onTextFieldValueChange: ((TextFieldValue) -> Unit)? = null,
+    onFocusChanged: ((Boolean) -> Unit)? = null
 ) {
     val paperColor = when (editorTheme) {
         "white" -> Color.White
@@ -4089,6 +4449,7 @@ fun WordDocumentEditor(
                                             fontSize = fontSize
                                         ),
                                         placeholder = { Text("Write in column ${i+1}...") },
+                                        visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
                                         colors = TextFieldDefaults.colors(
                                             focusedContainerColor = Color.Transparent,
                                             unfocusedContainerColor = Color.Transparent,
@@ -4104,28 +4465,57 @@ fun WordDocumentEditor(
                             }
                         }
                     } else {
-                        TextField(
-                            value = draftContent,
-                            onValueChange = onContentChange,
-                            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                                color = paperTextColor,
-                                lineHeight = 24.sp,
-                                textAlign = textAlignment,
-                                fontSize = fontSize
-                            ),
-                            placeholder = { Text("Write draft text here...") },
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                disabledContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 450.dp)
-                                .testTag("word_editor_content_field")
-                        )
+                        if (textFieldValue != null && onTextFieldValueChange != null) {
+                            TextField(
+                                value = textFieldValue,
+                                onValueChange = onTextFieldValueChange,
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                    color = paperTextColor,
+                                    lineHeight = 24.sp,
+                                    textAlign = textAlignment,
+                                    fontSize = fontSize
+                                ),
+                                placeholder = { Text("Write draft text here...") },
+                                visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    disabledContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 450.dp)
+                                    .onFocusChanged { onFocusChanged?.invoke(it.isFocused) }
+                                    .testTag("word_editor_content_field")
+                            )
+                        } else {
+                            TextField(
+                                value = draftContent,
+                                onValueChange = onContentChange,
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                    color = paperTextColor,
+                                    lineHeight = 24.sp,
+                                    textAlign = textAlignment,
+                                    fontSize = fontSize
+                                ),
+                                placeholder = { Text("Write draft text here...") },
+                                visualTransformation = RichTextVisualTransformation(MaterialTheme.colorScheme.onSurface),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    disabledContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 450.dp)
+                                    .onFocusChanged { onFocusChanged?.invoke(it.isFocused) }
+                                    .testTag("word_editor_content_field")
+                            )
+                        }
                     }
                 }
             }
